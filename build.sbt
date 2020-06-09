@@ -25,6 +25,7 @@ lazy val resolverSettings = Seq(
 val akkaVersion       = "2.6.6"
 val catsVersion       = "1.4.0"
 val scalaGraphVersion = "1.13.1"
+val scalafxVersion    = "12.0.2-R18"
 
 lazy val root = (project in file ("."))
   .settings(commonSettings)
@@ -36,5 +37,6 @@ lazy val root = (project in file ("."))
       "com.typesafe.akka" %% "akka-testkit"   % akkaVersion,
       "org.typelevel"     %% "cats-core"      % catsVersion,
       "org.scala-graph"   %% "graph-core"     % scalaGraphVersion,
+      "org.scalafx"       %% "scalafx"        % scalafxVersion
     )
   )
