@@ -4,6 +4,7 @@ case object NewOrder
 case object Order
 case object Disposition
 case object LocationReport
+case object Test
 
 case class SetNewLocation(location: Location)
 case class TaxiLocationReport(taxi: Taxi)

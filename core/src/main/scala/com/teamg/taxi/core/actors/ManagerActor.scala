@@ -1,30 +1,32 @@
 package actors
 
-import akka.actor.{Actor, ActorLogging, Props}
-import com.teamg.taxi.core.actors.{TaxiLocationReport, NewTaxi, LocationReport}
-import scala.concurrent.duration._
-import scala.language.postfixOps
-import scala.concurrent._
-import ExecutionContext.Implicits.global
+import akka.actor.{Actor, ActorLogging, ActorRef, Props}
+import com.teamg.taxi.core.actors.{TaxiLocationReport, Test}
+import com.teamg.taxi.core.pureactors.TaxiActorExample
 
 
 class ManagerActor extends Actor with ActorLogging {
 
+  var actorsIdList: List[String] = List("1", "2", "3")
+  private var TaxiActorExamplesMap = Map.empty[String, ActorRef]
+
+
   def receive = {
-    case NewTaxi(taxi) =>
-      val taxiActor = context.actorOf(Props(classOf[TaxiActor], taxi, context.self))
-      println(s"Create TaxiActor for taxi ${taxi.id}")
+    case Test =>
+      createTaxiActors()
+      TaxiActorExamplesMap.foreach(p => p._2 ! Test)
 
-      // run scheduler to call taxiActor to report its location every x millisecond
-      context.system.scheduler.scheduleAtFixedRate(3000 millisecond, 6000 millisecond, taxiActor, LocationReport)
-
-      
     case TaxiLocationReport(taxi) =>
       println(s"LOCATION taxi ${taxi.id} : ${taxi.location} ")
 
   }
 
 
-
+  def createTaxiActors() = {
+    actorsIdList.foreach(p => {
+      val child = context.actorOf(Props(classOf[TaxiActorExample], p))
+      TaxiActorExamplesMap += (p -> child)
+    })
+  }
 
 }
