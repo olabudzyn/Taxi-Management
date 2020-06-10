@@ -1,6 +1,6 @@
-package com.teamg.taxi.map
+package com.teamg.taxi.core.map
 
-import com.teamg.taxi.map.Utils.{createEdge, createNode}
+import com.teamg.taxi.core.map.Utils.{createEdge, createNode}
 
 class MapExample {
   val nodeLabels = List("A", "B", "C", "D", "E")

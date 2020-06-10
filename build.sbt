@@ -1,18 +1,19 @@
+organization := "com.teamg.taxi"
+version      := "0.0.1-SNAPSHOT"
+scalaVersion := "2.12.10"
 
 lazy val commonSettings = Seq(
-  name := "sag-taxi" ,
-  version := "0.0.1-SNAPSHOT",
-  scalaVersion := "2.12.7",
   scalacOptions ++= Seq(
-    "-encoding", "UTF-8",   // source files are in UTF-8
-    "-deprecation",         // warn about use of deprecated APIs
-    "-unchecked",           // warn about unchecked type parameters
-    "-feature",             // warn about misused language features
-    "-language:higherKinds",// allow higher kinded types without `import scala.language.higherKinds`
-    "-Xlint",               // enable handy linter warnings
-    "-Xfatal-warnings",     // turn compiler warnings into errors
+    "-encoding", "UTF-8", // source files are in UTF-8
+    "-deprecation", // warn about use of deprecated APIs
+    "-unchecked", // warn about unchecked type parameters
+    "-feature", // warn about misused language features
+    "-language:higherKinds", // allow higher kinded types without `import scala.language.higherKinds`
+    "-Xlint", // enable handy linter warnings
+    "-Xfatal-warnings", // turn compiler warnings into errors
     "-Ypartial-unification" // allow the compiler to unify type constructors of different arities
-  )
+  ),
+  target := { baseDirectory.value / "target" }
 )
 
 lazy val resolverSettings = Seq(
@@ -22,21 +23,58 @@ lazy val resolverSettings = Seq(
   )
 )
 
-val akkaVersion       = "2.6.6"
-val catsVersion       = "1.4.0"
-val scalaGraphVersion = "1.13.1"
-val scalafxVersion    = "12.0.2-R18"
+lazy val noPublishSettings = Seq(
+  publish := {},
+  publishLocal := {},
+  publishArtifact := false
+)
 
-lazy val root = (project in file ("."))
+// Determine OS version of JavaFX binaries
+lazy val osName = System.getProperty("os.name") match {
+  case n if n.startsWith("Linux")   => "linux"
+  case n if n.startsWith("Mac")     => "mac"
+  case n if n.startsWith("Windows") => "win"
+  case _ => throw new Exception("Unknown platform!")
+}
+
+// Add dependency on JavaFX libraries, OS dependent
+lazy val javaFXModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
+
+val akkaV = "2.6.6"
+val catsV = "1.4.0"
+val scalaGraphV = "1.13.1"
+val scalafxV = "14-R19"
+
+
+lazy val core = (project in file("core"))
   .settings(commonSettings)
   .settings(resolverSettings)
   .settings(
+    name := "core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka" %% "akka-actor"     % akkaVersion,
-      "com.typesafe.akka" %% "akka-slf4j"     % akkaVersion,
-      "com.typesafe.akka" %% "akka-testkit"   % akkaVersion,
-      "org.typelevel"     %% "cats-core"      % catsVersion,
-      "org.scala-graph"   %% "graph-core"     % scalaGraphVersion,
-      "org.scalafx"       %% "scalafx"        % scalafxVersion
+      "com.typesafe.akka"   %% "akka-actor"     % akkaV,
+      "com.typesafe.akka"   %% "akka-slf4j"     % akkaV,
+      "com.typesafe.akka"   %% "akka-testkit"   % akkaV,
+      "org.typelevel"       %% "cats-core"      % catsV,
+      "org.scala-graph"     %% "graph-core"     % scalaGraphV,
     )
   )
+
+lazy val gui = (project in file("gui"))
+  .settings(commonSettings)
+  .settings(resolverSettings)
+  .settings(
+    name := "gui",
+    libraryDependencies ++= Seq(
+      "org.typelevel"       %% "cats-core"      % catsV,
+      "org.scalafx"         %% "scalafx"        % scalafxV,
+    ) ++ javaFXModules.map( m =>
+      "org.openjfx"         % s"javafx-$m"      % "14.0.1" classifier osName
+    )
+  )
+  .dependsOn(core)
+
+lazy val root = (project in file("."))
+  .settings(noPublishSettings)
+  .settings(name := "root")
+  .aggregate(core, gui)

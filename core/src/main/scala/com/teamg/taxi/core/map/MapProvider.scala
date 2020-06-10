@@ -1,4 +1,4 @@
-package com.teamg.taxi.map
+package com.teamg.taxi.core.map
 
 import cats.Eq
 import cats.implicits._

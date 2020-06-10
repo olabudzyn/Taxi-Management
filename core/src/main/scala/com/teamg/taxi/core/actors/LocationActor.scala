@@ -1,6 +1,6 @@
 package actors
 import akka.actor.Actor
-import com.teamg.taxi.actors.{GetLocation, SetNewLocation, Taxi, Location}
+import com.teamg.taxi.core.actors.{GetLocation, SetNewLocation, Taxi, Location}
 
 import scala.util.Random
 

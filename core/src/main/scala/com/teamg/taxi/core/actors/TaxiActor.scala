@@ -1,6 +1,6 @@
 package actors
 import akka.actor.{Actor, ActorRef, Props}
-import com.teamg.taxi.actors.{GetLocation, LocationReport, SetNewLocation, Taxi, TaxiLocationReport}
+import com.teamg.taxi.core.actors.{GetLocation, LocationReport, SetNewLocation, Taxi, TaxiLocationReport}
 
 
 /* agent representing the driver */

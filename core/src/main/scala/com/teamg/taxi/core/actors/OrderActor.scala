@@ -1,7 +1,7 @@
 package actors
 import akka.actor.{Actor, ActorRef}
-import com.teamg.taxi.actors.Order
-import com.teamg.taxi.actors.NewOrder
+import com.teamg.taxi.core.actors.Order
+import com.teamg.taxi.core.actors.NewOrder
 
 
 /*agent representing course order */

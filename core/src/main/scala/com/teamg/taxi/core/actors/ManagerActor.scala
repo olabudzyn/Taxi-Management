@@ -1,7 +1,7 @@
 package actors
 
 import akka.actor.{Actor, ActorLogging, Props}
-import com.teamg.taxi.actors.{TaxiLocationReport, NewTaxi, LocationReport}
+import com.teamg.taxi.core.actors.{TaxiLocationReport, NewTaxi, LocationReport}
 import scala.concurrent.duration._
 import scala.language.postfixOps
 import scala.concurrent._

@@ -1,4 +1,4 @@
-package com.teamg.taxi.actors
+package com.teamg.taxi.core.actors
 
 case object NewOrder
 case object Order

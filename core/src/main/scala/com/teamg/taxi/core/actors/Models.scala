@@ -1,4 +1,4 @@
-package com.teamg.taxi.actors
+package com.teamg.taxi.core.actors
 
 
 case class Location(lat: Float, long: Float)

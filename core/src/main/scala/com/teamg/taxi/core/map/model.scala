@@ -1,6 +1,6 @@
-package com.teamg.taxi.map
+package com.teamg.taxi.core.map
 
-import com.teamg.taxi.map.Edge.Label
+import com.teamg.taxi.core.map.Edge.Label
 
 
 case class Node[ID](id: ID, x: Double, y: Double)

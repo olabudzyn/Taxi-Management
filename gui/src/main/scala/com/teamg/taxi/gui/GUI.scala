@@ -4,10 +4,10 @@ import scalafx.animation.{FillTransition, PathTransition}
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.geometry.Point2D
+import scalafx.scene.paint.Color.{Green, Red, WhiteSmoke, Yellow}
+import scalafx.scene.shape._
 import scalafx.scene.{Group, Scene}
-import scalafx.scene.shape.{Circle, LineTo, MoveTo, Path, PathElement, Shape}
 import scalafx.util.Duration
-import scalafx.scene.paint.Color._
 
 import scala.util.Random
 
@@ -65,7 +65,7 @@ object GUI extends JFXApp {
         val r = Random
         val x = 50 + r.nextInt(boardWidth - 100)
         val y = 50 + r.nextInt(boardHeight - 100)
-        return new Point2D(x, y)
+        new Point2D(x, y)
       }
 
       def generatePath(points: List[Point2D]): Path = {
@@ -75,39 +75,39 @@ object GUI extends JFXApp {
         path.elements.add(MoveTo(first.x, first.y))
         listToElement.foreach(e => path.elements.add(e))
         path.setOpacity(1)
-        return path
+        path
       }
 
       def generatePathTransition(shape: Shape, path: Path): PathTransition = {
-        val pathTransition = new PathTransition();
-        pathTransition.setDuration(new Duration(duration));
-        pathTransition.setPath(path);
-        pathTransition.setNode(shape);
-        pathTransition.setOrientation(PathTransition.OrientationType.OrthogonalToTangent);
-        pathTransition.setCycleCount(1);
-        return pathTransition;
+        val pathTransition = new PathTransition()
+        pathTransition.setDuration(new Duration(duration))
+        pathTransition.setPath(path)
+        pathTransition.setNode(shape)
+        pathTransition.setOrientation(PathTransition.OrientationType.OrthogonalToTangent)
+        pathTransition.setCycleCount(1)
+        pathTransition
       }
 
       def generateFillTransition(circle: Circle): FillTransition = {
-        val fillTransition = new FillTransition();
+        val fillTransition = new FillTransition()
         fillTransition.duration = new Duration(500)
         fillTransition.delay = new Duration(duration)
         fillTransition.fromValue = Green
         fillTransition.toValue = Yellow
         fillTransition.shape = circle
-        return fillTransition;
+        fillTransition
       }
 
       def applyAnimation(group: Group, circle1: Circle, circle2: Circle, points: List[Point2D]): Unit = {
         val circle = new Circle()
         circle.fill = Red
         circle.radius = pointSize
-        val path = generatePath(points);
+        val path = generatePath(points)
         group.getChildren.add(path)
         group.getChildren.add(circle)
         group.getChildren.add(circle1)
         group.getChildren.add(circle2)
-        val transition = generatePathTransition(circle, path);
+        val transition = generatePathTransition(circle, path)
         transition.play()
         val colourTrans = generateFillTransition(circle2)
         colourTrans.play()
