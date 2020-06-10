@@ -1,24 +1,29 @@
 package com.teamg.taxi.actors
+import actors.ManagerActor
 import akka.actor.{ActorSystem, Props}
-import language.postfixOps
-import scala.concurrent.duration._
 
-case class Location(lat: Float, long: Float)
-case class Taxi(name: String, location: Location)
-case object NewOrder
-case object Order
-case object Disposition
-case object ReportLocation
 
 class ActorExample {
-  val system2 = ActorSystem("pingpong")
-  val manager = system2.actorOf(Props[OrderAllocationManagerActor], "manager")
-  val order = system2.actorOf(Props(classOf[OrderActor], manager), "order")
-  //  val resource = system2.actorOf(Props(classOf[ResourceActor], manager), "order")
 
-  import system2.dispatcher
-  system2.scheduler.scheduleOnce(500 millis) {
-    order ! NewOrder
+  val system = ActorSystem("TaxiManagement")
+  val manager = system.actorOf(Props(classOf[ManagerActor]), "manager")
+
+
+  //create 4 Taxis
+  createTaxis(4)
+
+
+
+  implicit val executor = system.dispatcher
+
+  def createTaxis(number: Int): Unit ={
+    for (i <- 1 to number) {
+      val taxi = Taxi(i, Location(1.0f, 1.0f))
+      // register the new taxi with the management center
+      manager ! NewTaxi(taxi)
+    }
   }
-
 }
+
+
+
