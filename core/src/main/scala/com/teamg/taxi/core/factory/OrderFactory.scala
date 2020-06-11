@@ -2,7 +2,7 @@ package com.teamg.taxi.core.factory
 
 import java.util.UUID
 
-import com.teamg.taxi.core.model.{ClientType, Order, OrderType}
+import com.teamg.taxi.core.model.{CustomerType, Order, OrderType}
 
 object OrderFactory {
 
@@ -10,7 +10,7 @@ object OrderFactory {
 
   def create(from: String,
              target: String,
-             clientType: ClientType,
+             clientType: CustomerType,
              orderType: OrderType): Order = {
     Order(idProvider.next(), from, target, clientType, orderType)
   }

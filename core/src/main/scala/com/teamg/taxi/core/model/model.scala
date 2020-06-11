@@ -1,12 +1,12 @@
 package com.teamg.taxi.core.model
 
-sealed trait ClientType
+sealed trait CustomerType
 
-object ClientType {
+object CustomerType {
 
-  case object Normal extends ClientType
+  case object Normal extends CustomerType
 
-  case object Vip extends ClientType
+  case object Vip extends CustomerType
 
 }
 
@@ -35,14 +35,29 @@ object TaxiState {
 sealed trait OrderType
 
 object OrderType {
+
   case object Normal extends OrderType
+
   case class Predefined(time: Long) extends OrderType
+
+}
+
+sealed trait OrderState
+
+object OrderState {
+
+  case class Pending(order: Order, createTime: Long) extends OrderState
+
+  case class OnWayToCustomer(order: Order, taxiId: String) extends OrderState
+
+  case class TransportedCustomer(order: Order, taxiId: String) extends OrderState
+
 }
 
 case class Order(id: String,
                  from: String,
                  target: String,
-                 clientType: ClientType,
+                 customerType: CustomerType,
                  orderType: OrderType)
 
 case class Taxi(id: String,
