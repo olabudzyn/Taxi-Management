@@ -1,6 +1,5 @@
 package com.teamg.taxi.core.actors
 
-import actors.ManagerActor
 import akka.actor.{ActorSystem, Props}
 
 

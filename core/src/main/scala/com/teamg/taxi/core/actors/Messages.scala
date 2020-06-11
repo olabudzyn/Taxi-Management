@@ -8,5 +8,5 @@ case object Test
 
 case class SetNewLocation(location: Location)
 case class TaxiLocationReport(taxi: Taxi)
-case class NewTaxi(taxi: Taxi)
+case class  NewTaxi(taxi: Taxi)
 case class GetLocation(taxi: Taxi)

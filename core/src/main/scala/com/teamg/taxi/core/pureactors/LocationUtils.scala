@@ -1,0 +1,23 @@
+package com.teamg.taxi.core.pureactors
+
+import com.teamg.taxi.core.map.Location
+
+import scala.math._
+import scala.util.Random
+
+object LocationUtils {
+  def distance(l1: Location, l2: Location): Double = {
+    sqrt(pow(l1.x - l2.x, 2) + pow(l1.x - l2.y, 2))
+  }
+
+  def updateLocation(source: Location, target: Location, dist: Double): Location = {
+    val alpha = atan2(target.y - source.y, target.x - source.x)
+    val nx = dist * cos(alpha) + source.x
+    val ny = dist * sin(alpha) + source.y
+    Location(nx, ny)
+  }
+
+  def randomLocation(): Location = {
+    Location(Random.nextDouble(),Random.nextDouble())
+  }
+}

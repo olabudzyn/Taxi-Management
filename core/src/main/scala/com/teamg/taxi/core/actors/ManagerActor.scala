@@ -1,7 +1,6 @@
-package actors
+package com.teamg.taxi.core.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props}
-import com.teamg.taxi.core.actors.{TaxiLocationReport, Test}
 import com.teamg.taxi.core.pureactors.TaxiActorExample
 
 

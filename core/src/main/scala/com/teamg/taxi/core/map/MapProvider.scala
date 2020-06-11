@@ -1,36 +1,22 @@
 package com.teamg.taxi.core.map
 
-import cats.Eq
-import cats.implicits._
-import scalax.collection.Graph
-import scalax.collection.edge.WLUnDiEdge
-
-
-class MapProvider[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
-  implicit val eqFoo: Eq[ID] = Eq.fromUniversalEquals
-
-  def minimalDistance(fromId: ID, toId: ID): Option[Double] = {
-    shortestPath(fromId, toId).map(_.weight)
-  }
-
-  private def shortestPath(fromId: ID, toId: ID): Option[graph.Path] = {
-    for {
-      nodeFrom <- graph.nodes.find(_.id === fromId)
-      nodeTo <- graph.nodes.find(_.id === toId)
-      shortestPath <- nodeFrom.shortestPathTo(nodeTo)
-    } yield shortestPath
-  }
-}
+import com.teamg.taxi.core.map.Utils.{createEdge, createNode}
 
 object MapProvider {
+  val default: CityMap[String] = {
+    val nodeLabels = List("A", "B", "C", "D", "E")
+    val nodes = nodeLabels
+      .map(createNode)
+      .foldLeft(Map[String, Node[String]]()) { (m, s) => m + (s.id -> s) }
 
-  def apply[ID](nodes: Set[Node[ID]], edges: List[Edge[ID]]): MapProvider[ID] = {
-    val graphEdges = edges.map(graphEdge)
-    val graph = Graph.from(nodes, graphEdges)
-    new MapProvider(graph)
-  }
+    val edges =
+      createEdge(nodes("A"), nodes("B"), 1.0) ::
+        createEdge(nodes("A"), nodes("E"), 2.0) ::
+        createEdge(nodes("B"), nodes("D"), 3.0) ::
+        createEdge(nodes("B"), nodes("C"), 4.0) ::
+        createEdge(nodes("C"), nodes("E"), 5.0) ::
+        createEdge(nodes("A"), nodes("D"), 6.0) :: Nil
 
-  private def graphEdge[ID](edge: Edge[ID]): WLUnDiEdge[Node[ID]] = {
-    WLUnDiEdge(edge.first, edge.second)(edge.weight, edge.label)
+    CityMap(nodes.values.toSet, edges)
   }
 }
