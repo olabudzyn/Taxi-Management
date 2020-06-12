@@ -29,6 +29,7 @@ class ResourceActor(taxi: Taxi,
       targetEdges = edges
       currentEdgeIdx = 0
 
+
   }
 
   @scala.annotation.tailrec

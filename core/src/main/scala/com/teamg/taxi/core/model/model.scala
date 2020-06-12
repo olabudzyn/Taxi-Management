@@ -1,5 +1,7 @@
 package com.teamg.taxi.core.model
 
+import java.time.Instant
+
 sealed trait CustomerType
 
 object CustomerType {
@@ -46,7 +48,7 @@ sealed trait OrderState
 
 object OrderState {
 
-  case class Pending(order: Order, createTime: Long) extends OrderState
+  case class Pending(order: Order, createTime: Instant) extends OrderState
 
   case class OnWayToCustomer(order: Order, taxiId: String) extends OrderState
 
@@ -58,7 +60,8 @@ case class Order(id: String,
                  from: String,
                  target: String,
                  customerType: CustomerType,
-                 orderType: OrderType)
+                 orderType: OrderType,
+                 timeStamp: Instant)
 
 case class Taxi(id: String,
                 taxiType: TaxiType)
