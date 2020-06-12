@@ -3,9 +3,9 @@ package com.teamg.taxi.core
 import akka.actor.{ActorSystem, Props}
 import com.teamg.taxi.core.factory.OrderFactory
 import com.teamg.taxi.core.model.{CustomerType, OrderType}
-import com.teamg.taxi.core.pureactors.{ManagerActor, OrderAllocationManagerActor}
-import com.teamg.taxi.core.pureactors.ManagerActor.messages.{DispatchOrderM, StartM}
-import com.teamg.taxi.core.pureactors.OrderAllocationManagerActor.messages.{ArrivedOrderM}
+import com.teamg.taxi.core.actors.{ManagerActor, OrderAllocationManagerActor}
+import com.teamg.taxi.core.actors.ManagerActor.messages.{DispatchOrderM, StartM}
+import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.ArrivedOrderM
 
 
 class PureActorExample {

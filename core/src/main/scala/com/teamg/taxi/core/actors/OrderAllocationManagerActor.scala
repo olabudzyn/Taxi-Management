@@ -1,10 +1,10 @@
-package com.teamg.taxi.core.pureactors
+package com.teamg.taxi.core.actors
 
 import akka.actor.{Actor, ActorRef, Props}
 import com.teamg.taxi.core.factory.OrderFactory
 import com.teamg.taxi.core.model.{Order}
-import com.teamg.taxi.core.pureactors.OrderActor.messages.{PrintOrderActorIdM, StopOrderActorM}
-import com.teamg.taxi.core.pureactors.OrderAllocationManagerActor.messages.{ArrivedOrderM, CompletedOrderM, CreateOrderActorsM}
+import com.teamg.taxi.core.actors.OrderActor.messages.{PrintOrderActorIdM, StopOrderActorM}
+import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.{ArrivedOrderM, CompletedOrderM, CreateOrderActorsM}
 
 class OrderAllocationManagerActor extends Actor {
 

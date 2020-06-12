@@ -1,4 +1,4 @@
-package com.teamg.taxi.core.pureactors
+package com.teamg.taxi.core.actors
 
 import akka.actor.Actor
 

@@ -1,11 +1,11 @@
-package com.teamg.taxi.core.pureactors
+package com.teamg.taxi.core.actors
 
 import akka.actor.{Actor, ActorLogging}
 import cats.implicits._
 import com.teamg.taxi.core.map.{Edge, Location}
 import com.teamg.taxi.core.model.{Taxi, TaxiState}
-import com.teamg.taxi.core.pureactors.LocationUtils._
-import com.teamg.taxi.core.pureactors.ResourceActor.messages.{SetTargetM, UpdateLocationM}
+import com.teamg.taxi.core.actors.LocationUtils._
+import com.teamg.taxi.core.actors.ResourceActor.messages.{SetTargetM, UpdateLocationM}
 
 class ResourceActor(taxi: Taxi,
                     private var location: Location) extends Actor with ActorLogging {

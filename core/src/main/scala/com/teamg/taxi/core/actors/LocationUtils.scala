@@ -1,4 +1,4 @@
-package com.teamg.taxi.core.pureactors
+package com.teamg.taxi.core.actors
 
 import com.teamg.taxi.core.map.Location
 
