@@ -1,11 +1,11 @@
 package com.teamg.taxi.core.actors
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Props, Timers}
+import com.teamg.taxi.core.actors.ManagerActor.messages.{DispatchOrderM, StartM, UpdateTaxiLocationsM}
+import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{SetTargetM, UpdateLocationM}
+import com.teamg.taxi.core.actors.resource.ResourceActor
 import com.teamg.taxi.core.map.{Edge, MapProvider}
 import com.teamg.taxi.core.model.{Order, Taxi, TaxiType}
-import com.teamg.taxi.core.actors.ManagerActor.messages.{DispatchOrderM, StartM, UpdateTaxiLocationsM}
-import com.teamg.taxi.core.actors.ResourceActor.messages.{SetTargetM, UpdateLocationM}
-import com.teamg.taxi.core.actors.LocationUtils._
 
 import scala.concurrent.duration._
 
@@ -16,12 +16,12 @@ class ManagerActor
 
   private val taxiIds = List("1", "2", "3")
   private var taxiActors = Map.empty[String, ActorRef]
-  private val scale = 1
+  private val scale = 0.2
   private val cityMap = MapProvider.default
   private val defaultTaxi = taxiIds.head
 
-  def sendOrderToTaxi(edges: List[Edge[String]], taxi: ActorRef): Unit = {
-    taxi ! SetTargetM(edges)
+  def sendOrderToTaxi(orderId: String, edges: List[Edge[String]], taxi: ActorRef): Unit = {
+    taxi ! SetTargetM(orderId, edges)
   }
 
   def receive: Receive = {
@@ -35,12 +35,12 @@ class ManagerActor
       for {
         edges <- cityMap.edges(order.from, order.target)
         taxi <- taxiActors.get(defaultTaxi) // TODO chose proper taxi
-      } yield sendOrderToTaxi(edges, taxi)
+      } yield sendOrderToTaxi(order.id, edges, taxi)
   }
 
   private def createTaxiActors(): Unit = {
     taxiIds.foreach(id => {
-      val child = context.actorOf(Props(classOf[ResourceActor], Taxi(id, TaxiType.Car), randomLocation()))
+      val child = context.actorOf(Props(classOf[ResourceActor], Taxi(id, TaxiType.Car), LocationUtils.randomLocation()))
       taxiActors += (id -> child)
     })
   }

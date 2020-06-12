@@ -7,7 +7,7 @@ import scala.util.Random
 
 object LocationUtils {
   def distance(l1: Location, l2: Location): Double = {
-    sqrt(pow(l1.x - l2.x, 2) + pow(l1.x - l2.y, 2))
+    sqrt(pow(l1.x - l2.x, 2) + pow(l1.y - l2.y, 2))
   }
 
   def updateLocation(source: Location, target: Location, dist: Double): Location = {
@@ -18,6 +18,12 @@ object LocationUtils {
   }
 
   def randomLocation(): Location = {
-    Location(Random.nextDouble(),Random.nextDouble())
+    Location(doubleInRange(0.0, 5.0), doubleInRange(0.0, 5.0))
   }
+
+  private def doubleInRange(start: Double, end: Double) = {
+    start + (end - start) * Random.nextDouble()
+  }
+
+
 }

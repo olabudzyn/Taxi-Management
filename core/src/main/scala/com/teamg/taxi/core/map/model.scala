@@ -16,3 +16,6 @@ object Edge {
   val empty: Label = Label("")
 
 }
+
+
+

@@ -57,6 +57,8 @@ lazy val core = (project in file("core"))
       "com.typesafe.akka"   %% "akka-testkit"   % akkaV,
       "org.typelevel"       %% "cats-core"      % catsV,
       "org.scala-graph"     %% "graph-core"     % scalaGraphV,
+
+      "org.scalatest"       %% "scalatest"      % "3.0.8"       % Test
     )
   )
 
