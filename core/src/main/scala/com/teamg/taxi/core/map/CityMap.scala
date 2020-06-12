@@ -9,6 +9,7 @@ import scala.util.Random
 
 
 class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
+
   implicit val eqFoo: Eq[ID] = Eq.fromUniversalEquals
 
   def minimalDistance(fromId: ID, toId: ID): Option[Double] = {

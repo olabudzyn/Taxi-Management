@@ -6,6 +6,7 @@ import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.{Dispatch
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.UpdateLocationM
 import com.teamg.taxi.core.actors.resource.ResourceActor
 import com.teamg.taxi.core.factory.OrderFactory
+import com.teamg.taxi.core.map.MapProvider
 import com.teamg.taxi.core.model.{CustomerType, OrderType, Taxi, TaxiType}
 
 import scala.concurrent.duration._
@@ -15,6 +16,7 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
   private val scale = 0.2
   private val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor]))
   private val taxiActors = createTaxiActors(taxiIds)
+  private val cityMap = MapProvider.default
 
 
   def receive: Receive = {
@@ -34,7 +36,7 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
   private def createTaxiActors(taxiIds: List[String]): Map[String, ActorRef] = {
     taxiIds.map(id =>
       id -> context.actorOf(Props(classOf[ResourceActor], Taxi(id, TaxiType.Car),
-        orderAllocationManager, LocationUtils.randomLocation()))
+        orderAllocationManager, cityMap.randomNode()))
     ).toMap
 
   }

@@ -10,9 +10,6 @@ class PureActorExample {
 
   private val taxiSystemActor = system.actorOf(Props(classOf[TaxiSystemActor], List("1","2","3")), "manager")
   taxiSystemActor ! StartM
-
-
-
 }
 
 

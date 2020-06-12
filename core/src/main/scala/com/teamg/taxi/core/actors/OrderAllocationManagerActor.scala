@@ -1,16 +1,15 @@
 package com.teamg.taxi.core.actors
 
 import akka.actor.{Actor, ActorRef, Props}
-import com.teamg.taxi.core.model.Order
 import com.teamg.taxi.core.actors.OrderActor.messages.{PrintOrderActorIdM, StopOrderActorM}
-import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.{ArrivedOrderM, CompletedOrderM, DispatchOrderToTaxiM, SendTaxis, TaxiReceivedOrderM}
+import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages
+import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.SetTargetM
-import com.teamg.taxi.core.map.{Edge, MapProvider}
+import com.teamg.taxi.core.model.Order
 
 class OrderAllocationManagerActor extends Actor {
 
   private var taxiActors = Map.empty[String, ActorRef]
-  private val cityMap = MapProvider.default
   private var orderActors = Map.empty[String, ActorRef]
 
 
@@ -26,13 +25,15 @@ class OrderAllocationManagerActor extends Actor {
 
     case DispatchOrderToTaxiM(order) =>
       for {
-        edges <- cityMap.edges(order.from, order.target)
-        taxi <- taxiActors.get("1")   // TODO chose proper taxi
-      } yield sendOrderToTaxi(order.id, edges, taxi)
+        taxi <- taxiActors.get("1") // TODO chose proper taxi
+      } yield sendOrderToTaxi(order, taxi)
 
-
-    case TaxiReceivedOrderM =>
-      println(s"Taxi ${sender().path} received order")
+    case response: TaxiOrderResponse =>
+      response match {
+        case messages.TaxiAcceptedOrderM => println(s"Taxi received order")
+        case messages.TaxiOccupiedM => println(s"Taxi occupied")
+        case messages.TaxiOnWayM => println(s"Taxi on way to client")
+      }
 
     case SendTaxis(taxis) =>
       taxiActors = taxis
@@ -53,9 +54,9 @@ class OrderAllocationManagerActor extends Actor {
     orderActors.foreach(p => p._2 ! PrintOrderActorIdM)
   }
 
-  def sendOrderToTaxi(orderId: String, edges: List[Edge[String]], taxi: ActorRef): Unit = {
+  def sendOrderToTaxi(order: Order, taxi: ActorRef): Unit = {
     println("send order to taxi")
-    taxi ! SetTargetM(orderId, edges)
+    taxi ! SetTargetM(order)
   }
 
 }
@@ -65,7 +66,13 @@ object OrderAllocationManagerActor {
 
   object messages {
 
-    case object TaxiReceivedOrderM
+    sealed trait TaxiOrderResponse
+
+    case object TaxiAcceptedOrderM extends TaxiOrderResponse
+
+    case object TaxiOccupiedM extends TaxiOrderResponse
+
+    case object TaxiOnWayM extends TaxiOrderResponse
 
     case object CreateOrderActorsM
 

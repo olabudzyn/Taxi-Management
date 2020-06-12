@@ -28,11 +28,11 @@ sealed trait TaxiState
 
 object TaxiState {
 
-  case object Free extends TaxiState
+  case class Free(nodeId: String) extends TaxiState
 
-  case class Occupied(orderId: String, taxiPath: TaxiPath) extends TaxiState
+  case class Occupied(order: Order, taxiPath: TaxiPath) extends TaxiState
 
-  case class OnWayToCustomer(orderId: String, taxiPath: TaxiPath) extends TaxiState
+  case class OnWayToCustomer(order: Order, taxiPath: TaxiPath) extends TaxiState
 
 }
 
