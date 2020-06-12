@@ -1,17 +1,19 @@
 package com.teamg.taxi.core.actors.resource
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.{Actor, ActorLogging, ActorRef}
 import cats.Show
 import cats.implicits._
+import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.TaxiReceivedOrderM
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{SetTargetM, UpdateLocationM}
 import com.teamg.taxi.core.map.{Edge, Location}
 import com.teamg.taxi.core.model.TaxiPathState.Finished
 import com.teamg.taxi.core.model.{Taxi, TaxiPathState, TaxiState}
 
 class ResourceActor(taxi: Taxi,
+                    orderAllocationManagerActor: ActorRef,
                     private var location: Location) extends Actor with ActorLogging {
-  var taxiState: TaxiState = TaxiState.Free
 
+  var taxiState: TaxiState = TaxiState.Free
   private implicit val showLocation: Show[Location] = Show.show(location => s"x(${location.x.show}) y(${location.y.show})")
 
   override def receive: Receive = {
@@ -34,6 +36,7 @@ class ResourceActor(taxi: Taxi,
 
     case SetTargetM(orderId, edges) =>
       taxiState = TaxiState.Occupied(orderId, TaxiPath(edges))
+      orderAllocationManagerActor ! TaxiReceivedOrderM
   }
 
 
