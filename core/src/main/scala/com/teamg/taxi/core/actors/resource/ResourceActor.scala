@@ -48,8 +48,13 @@ class ResourceActor(taxi: Taxi,
     case SetTargetM(order) =>
       taxiState match {
         case TaxiState.Free(nodeId) =>
-          val startEdges = cityMap.edges(nodeId, order.from)
-          taxiState = TaxiState.OnWayToCustomer(order, TaxiPath(startEdges.get))
+          taxiState = if (order.from === nodeId) {
+            val startEdges = cityMap.edges(order.from, order.target)
+            TaxiState.Occupied(order, TaxiPath(startEdges.get))
+          } else {
+            val startEdges = cityMap.edges(nodeId, order.from)
+            TaxiState.OnWayToCustomer(order, TaxiPath(startEdges.get))
+          }
           orderAllocationManagerActor ! TaxiAcceptedOrderM
         case _: TaxiState.Occupied => orderAllocationManagerActor ! TaxiOccupiedM
         case _: TaxiState.OnWayToCustomer => orderAllocationManagerActor ! TaxiOnWayM

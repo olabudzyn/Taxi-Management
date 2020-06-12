@@ -15,7 +15,7 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
 
   private val scale = 0.2
   private val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor]))
-  private val taxiActors = createTaxiActors(taxiIds)
+  private lazy val taxiActors = createTaxiActors(taxiIds)
   private val cityMap = MapProvider.default
 
 
@@ -35,8 +35,7 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
 
   private def createTaxiActors(taxiIds: List[String]): Map[String, ActorRef] = {
     taxiIds.map(id =>
-      id -> context.actorOf(Props(classOf[ResourceActor], Taxi(id, TaxiType.Car),
-        orderAllocationManager, cityMap.randomNode()))
+      id -> context.actorOf(Props(classOf[ResourceActor], Taxi(id, TaxiType.Car), orderAllocationManager, cityMap.randomNode()))
     ).toMap
 
   }

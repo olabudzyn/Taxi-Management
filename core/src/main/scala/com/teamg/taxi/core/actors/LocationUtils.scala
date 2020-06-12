@@ -18,12 +18,18 @@ object LocationUtils {
   }
 
   def randomLocation(): Location = {
-    Location(doubleInRange(0.0, 5.0), doubleInRange(0.0, 5.0))
+    Location(doubleInRange(startX, endX), doubleInRange(startY, endY))
   }
 
   private def doubleInRange(start: Double, end: Double) = {
     start + (end - start) * Random.nextDouble()
   }
+
+  private val mapSize = 10
+  private val startX = 0.0
+  private val startY = 0.0
+  private val endX = mapSize
+  private val endY = mapSize
 
 
 }
