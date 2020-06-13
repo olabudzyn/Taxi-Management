@@ -30,7 +30,7 @@ class OrderAllocationManagerActor extends Actor {
 
     case DispatchOrderToTaxiM(order) =>
       for {
-        taxi <- taxiActors.get("1") // TODO chose proper taxi
+        taxi <- taxiActors.get("Taxi1") // TODO chose proper taxi
       } yield sendOrderToTaxi(order, taxi)
 
     case response: TaxiOrderResponse =>
