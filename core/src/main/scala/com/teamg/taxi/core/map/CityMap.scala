@@ -2,6 +2,7 @@ package com.teamg.taxi.core.map
 
 import cats.Eq
 import cats.implicits._
+import com.teamg.taxi.core.map.Edge.Label
 import scalax.collection.Graph
 import scalax.collection.edge.WLUnDiEdge
 import com.teamg.taxi.core.utils.Utils._
@@ -21,6 +22,12 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
     edgesOnPath(fromId, toId)
   }
 
+  def getCityMapElements: CityMapElements[ID] = {
+    val nodes = graph.nodes.map(n => Node(n.id, n.location)).toList
+    val edges =  graph.edges.map(e => Edge(Label.empty, e.head.value, e.to.value, e.weight)).toList
+    CityMapElements(nodes, edges)
+  }
+
   def randomNode(): Node[ID] = {
     val nodes = graph.nodes.map(_.value).toSeq
     getRandomElement(nodes, new Random())
@@ -28,7 +35,7 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
 
   private def edgesOnPath(fromId: ID, toId: ID): Option[List[Edge[ID]]] = {
     shortestPath(fromId, toId)
-      .map(_.edges.map(e => Edge(Edge.empty, e.head.value, e.to.value, e.weight))
+      .map(_.edges.map(e => Edge(Label.empty, e.head.value, e.to.value, e.weight))
         .toList
       )
   }

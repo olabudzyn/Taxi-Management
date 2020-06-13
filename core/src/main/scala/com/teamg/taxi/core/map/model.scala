@@ -7,15 +7,16 @@ case class Node[ID](id: ID, location: Location)
 
 case class Edge[ID](label: Label, first: Node[ID], second: Node[ID], weight: Double)
 
+case class CityMapElements[ID](nodes: List[Node[ID]], edges: List[Edge[ID]])
+
 case class Location(x: Double, y: Double)
 
 object Edge {
 
   case class Label(value: String) extends AnyVal
 
-  val empty: Label = Label("")
+  object Label {
+    val empty: Label = Label("")
+  }
 
 }
-
-
-
