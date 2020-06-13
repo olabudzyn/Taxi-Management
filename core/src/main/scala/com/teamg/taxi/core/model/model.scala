@@ -37,6 +37,18 @@ object TaxiState {
 
 }
 
+sealed trait TaxiPureState
+
+object TaxiPureState {
+
+  case object Free extends TaxiPureState
+
+  case object Occupied extends TaxiPureState
+
+  case object OnWayToCustomer extends TaxiPureState
+
+}
+
 sealed trait OrderType
 
 object OrderType {
