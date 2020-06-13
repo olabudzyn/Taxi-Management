@@ -41,7 +41,7 @@ sealed trait TaxiPureState
 
 object TaxiPureState {
 
-  case object Free extends TaxiPureState
+  case class Free(fromTimestamp: Instant) extends TaxiPureState
 
   case object Occupied extends TaxiPureState
 

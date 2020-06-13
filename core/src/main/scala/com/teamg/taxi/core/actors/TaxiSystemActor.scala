@@ -1,5 +1,7 @@
 package com.teamg.taxi.core.actors
 
+import java.time.{Clock, ZoneId}
+
 import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Timers}
 import akka.http.scaladsl.Http
 import akka.stream.Materializer
@@ -17,8 +19,9 @@ import scala.util.{Failure, Success}
 
 class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging with Timers {
 
+  implicit val clock: Clock = Clock.system(ZoneId.of("Europe/Warsaw"))
   private val scale = 0.2
-  private val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor]))
+  private val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor], clock))
   private lazy val taxiActors = createTaxiActors(taxiIds)
   private val cityMap = MapProvider.default
 
@@ -55,7 +58,7 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
 
   private def createTaxiActors(taxiIds: List[String]): Map[String, ActorRef] = {
     taxiIds.map(id =>
-      id -> context.actorOf(Props(classOf[ResourceActor], Taxi(id, TaxiType.Car), orderAllocationManager, cityMap.randomNode()))
+      id -> context.actorOf(Props(classOf[ResourceActor], clock, Taxi(id, TaxiType.Car), orderAllocationManager, cityMap.randomNode()))
     ).toMap
 
   }
