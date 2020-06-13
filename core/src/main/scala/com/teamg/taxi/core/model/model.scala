@@ -12,6 +12,7 @@ object CustomerType {
 
   case object Vip extends CustomerType
 
+  case object SuperVip extends CustomerType
 }
 
 sealed trait TaxiType
@@ -42,7 +43,7 @@ object OrderType {
 
   case object Normal extends OrderType
 
-  case class Predefined(time: Long) extends OrderType
+  case class Predefined(time: Instant) extends OrderType
 
 }
 

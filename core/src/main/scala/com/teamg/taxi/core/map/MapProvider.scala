@@ -1,6 +1,6 @@
 package com.teamg.taxi.core.map
 
-import com.teamg.taxi.core.map.Utils.{createEdge, createNode}
+import com.teamg.taxi.core.map.MapUtils.{createEdge, createNode}
 
 object MapProvider {
   val default: CityMap[String] = {

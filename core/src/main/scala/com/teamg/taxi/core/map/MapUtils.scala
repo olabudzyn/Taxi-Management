@@ -4,7 +4,7 @@ import com.teamg.taxi.core.map.Edge.Label
 
 import scala.util.Random
 
-object Utils {
+object MapUtils {
 
   def createNode(id: String): Node[String] = {
     Node(id, Location(Random.nextDouble(), Random.nextDouble()))

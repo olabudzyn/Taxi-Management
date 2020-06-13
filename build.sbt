@@ -41,7 +41,10 @@ lazy val osName = System.getProperty("os.name") match {
 lazy val javaFXModules = Seq("base", "controls", "fxml", "graphics", "media", "swing", "web")
 
 val akkaV = "2.6.6"
+val akkaHttpV = "10.1.12"
+val akkaHttpCirceV = "1.27.0"
 val catsV = "1.4.0"
+val circeV = "0.11.1"
 val scalaGraphV = "1.13.1"
 val scalafxV = "14-R19"
 
@@ -52,13 +55,20 @@ lazy val core = (project in file("core"))
   .settings(
     name := "core",
     libraryDependencies ++= Seq(
-      "com.typesafe.akka"   %% "akka-actor"     % akkaV,
-      "com.typesafe.akka"   %% "akka-slf4j"     % akkaV,
-      "com.typesafe.akka"   %% "akka-testkit"   % akkaV,
-      "org.typelevel"       %% "cats-core"      % catsV,
-      "org.scala-graph"     %% "graph-core"     % scalaGraphV,
+      "de.heikoseeberger"   %% "akka-http-circe"      % akkaHttpCirceV,
+      "com.typesafe.akka"   %% "akka-actor"           % akkaV,
+      "com.typesafe.akka"   %% "akka-slf4j"           % akkaV,
+      "com.typesafe.akka"   %% "akka-testkit"         % akkaV,
+      "com.typesafe.akka"   %% "akka-http"            % akkaHttpV ,
+      "com.typesafe.akka"   %% "akka-stream"          % akkaV ,
+      "io.circe"            %% "circe-core"           % circeV,
+      "io.circe"            %% "circe-parser"         % circeV,
+      "io.circe"            %% "circe-generic"        % circeV,
+      "io.circe"            %% "circe-generic-extras" % circeV,
+      "org.typelevel"       %% "cats-core"            % catsV,
+      "org.scala-graph"     %% "graph-core"           % scalaGraphV,
 
-      "org.scalatest"       %% "scalatest"      % "3.0.8"       % Test
+      "org.scalatest"       %% "scalatest"            % "3.0.8"             % Test
     )
   )
 

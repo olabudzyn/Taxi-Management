@@ -6,6 +6,9 @@ import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.SetTargetM
 import com.teamg.taxi.core.model.Order
+import com.teamg.taxi.core.utils.Utils
+
+import scala.util.Random
 
 class OrderAllocationManagerActor extends Actor {
 
@@ -14,9 +17,11 @@ class OrderAllocationManagerActor extends Actor {
 
 
   override def receive: Receive = {
-
     case ArrivedOrderM(order: Order) =>
       addOrderActor(order)
+      for {
+        taxi <- taxiActors.get( Utils.getRandomElement(taxiActors.keys.toSeq, new Random())) // TODO chose proper taxi
+      } yield sendOrderToTaxi(order, taxi)
       printOrderActors()
 
     case CompletedOrderM(orderId: String) =>

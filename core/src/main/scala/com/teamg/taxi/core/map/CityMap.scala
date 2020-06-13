@@ -4,6 +4,7 @@ import cats.Eq
 import cats.implicits._
 import scalax.collection.Graph
 import scalax.collection.edge.WLUnDiEdge
+import com.teamg.taxi.core.utils.Utils._
 
 import scala.util.Random
 
@@ -13,10 +14,6 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
   implicit val eqFoo: Eq[ID] = Eq.fromUniversalEquals
 
   def minimalDistance(fromId: ID, toId: ID): Option[Double] = {
-    val nodes = shortestPath(fromId, toId).map(_.nodes).get
-    val edges = shortestPath(fromId, toId).map(_.edges).get
-    println(nodes)
-    println(edges)
     shortestPath(fromId, toId).map(_.weight)
   }
 
@@ -35,10 +32,6 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
         .toList
       )
   }
-
-  private def getRandomElement[A](seq: Seq[A], random: Random): A =
-    seq(random.nextInt(seq.length))
-
 
   private def shortestPath(fromId: ID, toId: ID): Option[graph.Path] = {
     for {
