@@ -1,22 +1,19 @@
 package com.teamg.taxi.gui
 
-import scalafx.animation.{FillTransition, PathTransition}
+import com.teamg.taxi.core.map.MapProvider
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.geometry.Point2D
-import scalafx.scene.paint.Color.{Green, Red, WhiteSmoke, Yellow}
+import scalafx.scene.paint.Color._
 import scalafx.scene.shape._
 import scalafx.scene.{Group, Scene}
-import scalafx.util.Duration
-
-import scala.util.Random
 
 object GUI extends JFXApp {
 
-  val duration = 8000
   val pointSize = 10
   val boardWidth = 800
   val boardHeight = 800
+  private val cityMap = MapProvider.default
 
   stage = new PrimaryStage {
     title = "Taxi System"
@@ -26,46 +23,20 @@ object GUI extends JFXApp {
       fill = WhiteSmoke
       val canvas = new Group()
 
-      val pointFirst: Point2D = generatePoint()
-      val point1: Point2D = generatePoint()
-      val point2: Point2D = generatePoint()
-      val point3: Point2D = generatePoint()
-      val pointLast: Point2D = generatePoint()
-      val list = List(pointFirst, point1, point2, point3, pointLast)
+      val circles: List[Circle] = cityMap.getCityMapElements.nodes.map(node =>  createCircle(node.location.x, node.location.y)).toList
+      val paths: List[Path] = cityMap.getCityMapElements.edges.map(edge => generatePath(List(new Point2D(edge.first.location.x, edge.first.location.y),
+        new Point2D(edge.second.location.x, edge.second.location.y))))
 
-      val pointFirst2: Point2D = generatePoint()
-      val pointLast2: Point2D = generatePoint()
-      val list2 = List(pointFirst2, pointLast2)
-
-      val circle1 = new Circle()
-      circle1.fill = Green
-      circle1.radius = pointSize
-      circle1.relocate(pointFirst.x - pointSize, pointFirst.y - pointSize)
-
-      val circle2 = new Circle()
-      circle2.fill = Green
-      circle2.radius = pointSize
-      circle2.relocate(pointLast.x - pointSize, pointLast.y - pointSize)
-
-      val circle3 = new Circle()
-      circle3.fill = Green
-      circle3.radius = pointSize
-      circle3.relocate(pointFirst2.x - pointSize, pointFirst2.y - pointSize)
-
-      val circle4 = new Circle()
-      circle4.fill = Green
-      circle4.radius = pointSize
-      circle4.relocate(pointLast2.x - pointSize, pointLast2.y - pointSize)
-
-      applyAnimation(canvas, circle1, circle2, list)
-      applyAnimation(canvas, circle3, circle4, list2)
+      circles.foreach(circle => canvas.getChildren.add(circle))
+      paths.foreach(path => canvas.getChildren.add(path))
       content = canvas
 
-      def generatePoint(): Point2D = {
-        val r = Random
-        val x = 50 + r.nextInt(boardWidth - 100)
-        val y = 50 + r.nextInt(boardHeight - 100)
-        new Point2D(x, y)
+      def createCircle(x: Double, y: Double): Circle = {
+        val circle = new Circle()
+        circle.fill = Blue
+        circle.radius = pointSize
+        circle.relocate(x - pointSize, y - pointSize)
+        circle
       }
 
       def generatePath(points: List[Point2D]): Path = {
@@ -76,43 +47,6 @@ object GUI extends JFXApp {
         listToElement.foreach(e => path.elements.add(e))
         path.setOpacity(1)
         path
-      }
-
-      def generatePathTransition(shape: Shape, path: Path): PathTransition = {
-        val pathTransition = new PathTransition()
-        pathTransition.setDuration(new Duration(duration))
-        pathTransition.setPath(path)
-        pathTransition.setNode(shape)
-        pathTransition.setOrientation(PathTransition.OrientationType.OrthogonalToTangent)
-        pathTransition.setCycleCount(1)
-        pathTransition
-      }
-
-      def generateFillTransition(circle: Circle): FillTransition = {
-        val fillTransition = new FillTransition()
-        fillTransition.duration = new Duration(500)
-        fillTransition.delay = new Duration(duration)
-        fillTransition.fromValue = Green
-        fillTransition.toValue = Yellow
-        fillTransition.shape = circle
-        fillTransition
-      }
-
-      def applyAnimation(group: Group, circle1: Circle, circle2: Circle, points: List[Point2D]): Unit = {
-        val circle = new Circle()
-        circle.fill = Red
-        circle.radius = pointSize
-        val path = generatePath(points)
-        group.getChildren.add(path)
-        group.getChildren.add(circle)
-        group.getChildren.add(circle1)
-        group.getChildren.add(circle2)
-        val transition = generatePathTransition(circle, path)
-        transition.play()
-        val colourTrans = generateFillTransition(circle2)
-        colourTrans.play()
-        val colourTrans2 = generateFillTransition(circle1)
-        colourTrans2.play()
       }
     }
   }

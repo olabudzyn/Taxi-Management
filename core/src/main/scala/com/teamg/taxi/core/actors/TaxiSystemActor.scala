@@ -20,7 +20,7 @@ import scala.util.{Failure, Success}
 class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging with Timers {
 
   implicit val clock: Clock = Clock.system(ZoneId.of("Europe/Warsaw"))
-  private val scale = 0.2
+  private val scale = 20
   private val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor], clock))
   private lazy val taxiActors = createTaxiActors(taxiIds)
   private val cityMap = MapProvider.default
