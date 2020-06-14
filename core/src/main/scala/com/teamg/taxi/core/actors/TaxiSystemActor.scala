@@ -6,7 +6,7 @@ import akka.actor.{Actor, ActorLogging, ActorRef, ActorSystem, Props, Timers}
 import akka.http.scaladsl.Http
 import akka.stream.Materializer
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.SendTaxis
-import com.teamg.taxi.core.actors.TaxiSystemActor.messages.{StartDispatchingM, StartM, StopM, UpdateTaxiLocationsM}
+import com.teamg.taxi.core.actors.TaxiSystemActor.messages.{StartM, StopM, UpdateTaxiLocationsM}
 import com.teamg.taxi.core.actors.resource.ResourceActor
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.UpdateLocationM
 import com.teamg.taxi.core.factory.AkkaOrderDispatcher
@@ -27,10 +27,11 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
 
   private implicit val system: ActorSystem = ActorSystem("TaxiSystemManagement")
   private implicit val materializer: Materializer = Materializer(context)
+
   import system.dispatcher
 
   private val orderService = new OrderService(orderDispatcher = new AkkaOrderDispatcher(orderAllocationManager))
-  private val bindingFuture = Http().bindAndHandle(orderService.route, "localhost", 8080).andThen  {
+  private val bindingFuture = Http().bindAndHandle(orderService.route, "localhost", 8080).andThen {
     case Success(_) => println("Bind success")
     case Failure(_) => println("Bind failure")
   }
@@ -41,12 +42,8 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
       orderAllocationManager ! SendTaxis(taxiActors)
       timers.startTimerAtFixedRate("UpdateKey", UpdateTaxiLocationsM, 1.second)
 
-
     case UpdateTaxiLocationsM =>
       taxiActors.foreach(entry => entry._2 ! UpdateLocationM(scale))
-
-    case StartDispatchingM =>
-
 
     case StopM =>
       bindingFuture
@@ -55,12 +52,10 @@ class TaxiSystemActor(taxiIds: List[String]) extends Actor with ActorLogging wit
 
   }
 
-
   private def createTaxiActors(taxiIds: List[String]): Map[String, ActorRef] = {
     taxiIds.map(id =>
       id -> context.actorOf(Props(classOf[ResourceActor], clock, Taxi(id, TaxiType.Car), orderAllocationManager, cityMap.randomNode()))
     ).toMap
-
   }
 
 }
@@ -74,8 +69,6 @@ object TaxiSystemActor {
     case object StopM
 
     case object UpdateTaxiLocationsM
-
-    case object StartDispatchingM
 
   }
 

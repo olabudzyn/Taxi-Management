@@ -1,8 +1,7 @@
 package com.teamg.taxi.core.actors.resource
 
 import cats.implicits._
-import com.teamg.taxi.core.actors.LocationUtils
-import com.teamg.taxi.core.map.{Edge, Location}
+import com.teamg.taxi.core.map.{Edge, Location, LocationUtils}
 import com.teamg.taxi.core.model.TaxiPathState
 
 

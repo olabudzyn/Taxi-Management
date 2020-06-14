@@ -1,6 +1,4 @@
-package com.teamg.taxi.core.actors
-
-import com.teamg.taxi.core.map.Location
+package com.teamg.taxi.core.map
 
 import scala.math._
 import scala.util.Random
