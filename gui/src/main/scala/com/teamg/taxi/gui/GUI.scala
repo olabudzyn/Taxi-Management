@@ -8,7 +8,8 @@ import scalafx.application.JFXApp.PrimaryStage
 import scalafx.geometry.Point2D
 import scalafx.scene.paint.Color
 import scalafx.scene.paint.Color._
-import scalafx.scene.shape.{Circle, LineTo, MoveTo, Path, PathElement}
+import scalafx.scene.shape._
+import scalafx.scene.text.{Text, TextBoundsType}
 import scalafx.scene.{Group, Scene}
 
 import scala.util.Random
@@ -19,6 +20,10 @@ object GUI extends JFXApp {
   val boardWidth = 800
   val boardHeight = 800
   val refreshTime = 1000000000L
+  val padding = 18
+  val freeStateColor = Green
+  val occupiedStateColor = Red
+  val onWayToCustomerStateColor = DarkMagenta
   private val cityMap = MapProvider.default
 
   stage = new PrimaryStage {
@@ -28,28 +33,37 @@ object GUI extends JFXApp {
     scene = new Scene {
       fill = WhiteSmoke
       val canvas = new Group
+
       createStaticMap()
+      createLegend()
 
       val taxis = List(Taxi("Taxi1", Location(Random.nextInt(boardWidth - 50), Random.nextInt(boardHeight - 50)), TaxiState.Free),
         Taxi("Taxi2", Location(Random.nextInt(boardWidth - 50), Random.nextInt(boardHeight - 50)), TaxiState.Free),
         Taxi("Taxi3", Location(Random.nextInt(boardWidth - 50), Random.nextInt(boardHeight - 50)), TaxiState.Free)
       )
 
+      val taxiLabels: List[Text] = taxis.map(t => createText(t.id, t.location))
+
       val taxiCircles: List[Circle] = taxis.map(t => drawTaxi(t))
       taxiCircles.foreach(tc => canvas.getChildren.add(tc))
+      taxiLabels.foreach(label => canvas.getChildren.add(label))
+
+      val taxiWithLabel = (taxiLabels, taxiCircles).zipped
 
       content = canvas
 
       var lastUpdate = 0L
       val timer: AnimationTimer = AnimationTimer { now => {
         if (now - lastUpdate >= refreshTime) {
-          taxiCircles.foreach(tc => canvas.getChildren.remove(tc))
-          taxiCircles.foreach(tc => tc.fill = checkState(randomState()))
-          taxiCircles.foreach(tc => {
+          taxiWithLabel.foreach((label, taxi) => canvas.children.removeAll(label, taxi))
+          taxiWithLabel.foreach((label, taxi) => {
+            taxi.fill = checkState(randomState())
             val newLocation = getRandomLocation()
-            tc.relocate(newLocation.x, newLocation.y)
+            taxi.relocate(newLocation.x, newLocation.y)
+            label.relocate(newLocation.x + padding, newLocation.y + padding)
+
           })
-          taxiCircles.foreach(tc => canvas.getChildren.add(tc))
+          taxiWithLabel.foreach((label, taxi) => canvas.children.addAll(label, taxi))
           lastUpdate = now
         }
       }
@@ -57,8 +71,25 @@ object GUI extends JFXApp {
 
       timer.start()
 
+      def createLegend() = {
+        canvas.getChildren.add(createText("free taxi",Location(boardWidth-200, 0)))
+        canvas.getChildren.add(createCircle(boardWidth-200, 25, freeStateColor))
+        canvas.getChildren.add(createText("on the way to customer taxi", Location(boardWidth-200, 50)))
+        canvas.getChildren.add(createCircle(boardWidth-200, 75, onWayToCustomerStateColor))
+        canvas.getChildren.add(createText("occupied taxi", Location(boardWidth-200, 100)))
+        canvas.getChildren.add(createCircle(boardWidth-200, 125, occupiedStateColor))
+      }
+
+      def createText(name: String, location: Location): Text = {
+        val text = new Text(name)
+        text.fill = Black
+        text.relocate(location.x + padding, location.y + padding)
+        text.boundsType = TextBoundsType.Visual
+        text
+      }
+
       def createStaticMap(): Unit = {
-        val circles: List[Circle] = cityMap.getCityMapElements.nodes.map(node => createCircle(node.location.x, node.location.y))
+        val circles: List[Circle] = cityMap.getCityMapElements.nodes.map(node => createCircle(node.location.x, node.location.y, Blue))
         val paths: List[Path] = cityMap.getCityMapElements.edges.map(edge => generatePath(List(new Point2D(edge.first.location.x, edge.first.location.y),
           new Point2D(edge.second.location.x, edge.second.location.y))))
         circles.foreach(circle => canvas.getChildren.add(circle))
@@ -75,7 +106,7 @@ object GUI extends JFXApp {
       }
 
       def getRandomLocation(): Location = {
-        Location(Random.nextInt(boardWidth-50), Random.nextInt(boardHeight-50))
+        Location(Random.nextInt(boardWidth - 50), Random.nextInt(boardHeight - 50))
       }
 
       def drawTaxi(taxi: Taxi): Circle = {
@@ -88,15 +119,15 @@ object GUI extends JFXApp {
 
       def checkState(state: TaxiState): Color = {
         state match {
-          case TaxiState.Free => Green
-          case TaxiState.OnWayToCustomer => DarkMagenta
-          case TaxiState.Occupied => Red
+          case TaxiState.Free => freeStateColor
+          case TaxiState.OnWayToCustomer => onWayToCustomerStateColor
+          case TaxiState.Occupied => occupiedStateColor
         }
       }
 
-      def createCircle(x: Double, y: Double): Circle = {
+      def createCircle(x: Double, y: Double, color: Color): Circle = {
         val circle = new Circle()
-        circle.fill = Blue
+        circle.fill = color
         circle.radius = pointSize
         circle.relocate(x - pointSize, y - pointSize)
         circle
@@ -113,4 +144,5 @@ object GUI extends JFXApp {
       }
     }
   }
+
 }
