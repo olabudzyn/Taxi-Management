@@ -10,12 +10,12 @@ import com.teamg.taxi.core.api.codecs._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
-class TaxiSystemStateReceiver(url: Uri)
-                             (implicit actorSystem: ActorSystem) {
+class HttpTaxiStateSystemReceiver(url: Uri)
+                                 (implicit actorSystem: ActorSystem) extends TaxiStateSystemReceiver {
 
   import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport._
 
-  def receive(implicit executionContext: ExecutionContext): Future[TaxiSystemState] = {
+  override def receive(implicit executionContext: ExecutionContext): Future[TaxiSystemState] = {
     Http().singleRequest(HttpRequest(
       method = HttpMethods.GET,
       uri = url,

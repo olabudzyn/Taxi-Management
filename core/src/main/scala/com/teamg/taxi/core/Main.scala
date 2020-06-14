@@ -1,17 +1,14 @@
 package com.teamg.taxi.core
 
-import akka.actor.ActorSystem
-import com.teamg.taxi.core.factory.TaxiSystemStateReceiver
+import scala.concurrent.{ExecutionContext, ExecutionContextExecutor}
 
 object Main extends App {
 
-  val actorExample = new TaxiSystem()
-  implicit val actorSystem = ActorSystem("Main")
-  Thread.sleep(10000)
-  import actorSystem.dispatcher
+  val taxiSystem = new TaxiSystem()
+  Thread.sleep(5000)
+  implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
 
-  val taxiSystemStateReceiver = new TaxiSystemStateReceiver("http://localhost:8080/state")
-  val response = taxiSystemStateReceiver.receive
+  val response = taxiSystem.receive
 
   Thread.sleep(100000)
 }
