@@ -28,6 +28,12 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
     CityMapElements(nodes, edges)
   }
 
+  def getNode(id: ID): Option[Node[ID]] = {
+    graph.nodes
+      .find(node => node.value.id === id)
+      .map(_.value)
+  }
+
   def randomNode(): Node[ID] = {
     val nodes = graph.nodes.map(_.value).toSeq
     getRandomElement(nodes, new Random())

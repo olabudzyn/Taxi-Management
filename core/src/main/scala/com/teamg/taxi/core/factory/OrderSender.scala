@@ -3,7 +3,7 @@ package com.teamg.taxi.core.factory
 import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
-import com.teamg.taxi.core.service.OrderService.OrderRequest
+import com.teamg.taxi.core.api.OrderService.OrderRequest
 import io.circe.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}

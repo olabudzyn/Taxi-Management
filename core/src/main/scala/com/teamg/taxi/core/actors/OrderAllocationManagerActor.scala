@@ -7,6 +7,7 @@ import cats.Eq
 import com.teamg.taxi.core.actors.OrderActor.messages.{PrintOrderActorIdM, StopOrderActorM}
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, NewOrderRequestM}
+import com.teamg.taxi.core.actors.systemwatcher.SystemStateWatcher.messages.UnallocatedOrdersM
 import com.teamg.taxi.core.model.{Order, Taxi, TaxiPureState}
 import com.teamg.taxi.core.utils.Utils
 
@@ -14,12 +15,13 @@ import scala.util.Random
 
 class OrderAllocationManagerActor(clock: Clock) extends Actor {
 
-  private var taxiActors = Map.empty[String, ActorRef]
-  private var taxiStates = Map.empty[String, TaxiPureState]
-  private var taxiCost = Map.empty[String, Option[Double]]
+  private var taxiActors: Map[String, ActorRef] = Map.empty
+  private var taxiStates: Map[String, TaxiPureState] = Map.empty
+  private var taxiCost: Map[String, Option[Double]] = Map.empty
 
-  private var orderActors = Map.empty[String, ActorRef]
+  private var orderActors: Map[String, ActorRef] = Map.empty
 
+  private var orders: Map[String, Order] = Map.empty
 
   override def receive: Receive = {
     case ArrivedOrderM(order: Order) =>
@@ -28,6 +30,7 @@ class OrderAllocationManagerActor(clock: Clock) extends Actor {
       taxiStates = createInitialTaxiStates(taxiActors)
       taxiCost = createInitialTaxiCost(taxiActors)
       addOrderActor(order)
+      orders += order.id -> order
       for {
         taxi <- taxiActors.get(Utils.getRandomElement(taxiActors.keys.toSeq, new Random())) // TODO chose proper taxi
       } yield sendOrderToTaxi(order, taxi)
@@ -59,6 +62,9 @@ class OrderAllocationManagerActor(clock: Clock) extends Actor {
         case TaxiOrderResponse.TaxiAlreadyOccupiedM(taxi) =>
         case TaxiOrderResponse.TaxiOnWayToAnotherClient(taxi) =>
       }
+
+    case GetUnallocatedOrdersM=>
+      sender ! UnallocatedOrdersM(orders.values.toList)
 
   }
 
@@ -140,6 +146,8 @@ object OrderAllocationManagerActor {
       case class TaxiPickUpCustomerM(taxi: Taxi) extends TaxiUpdateResponse
 
     }
+
+    case object GetUnallocatedOrdersM
 
     case object CreateOrderActorsM
 

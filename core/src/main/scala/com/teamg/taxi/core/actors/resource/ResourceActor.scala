@@ -7,7 +7,8 @@ import cats.Show
 import cats.implicits._
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.TaxiUpdateResponse.{TaxiFinishedOrderM, TaxiPickUpCustomerM}
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
-import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, NewOrderRequestM, UpdateLocationM}
+import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, GetTaxiStateM, NewOrderRequestM, UpdateLocationM}
+import com.teamg.taxi.core.actors.systemwatcher.SystemStateWatcher.messages.TaxiStateM
 import com.teamg.taxi.core.map.{Location, MapProvider, Node}
 import com.teamg.taxi.core.model.TaxiPathState.Finished
 import com.teamg.taxi.core.model.{Order, Taxi, TaxiPathState, TaxiState}
@@ -25,6 +26,9 @@ class ResourceActor(clock: Clock,
   private implicit val showLocation: Show[Location] = Show.show(location => s"x(${location.x.show}) y(${location.y.show})")
 
   override def receive: Receive = {
+    case GetTaxiStateM(requester) =>
+      requester ! TaxiStateM(taxi.id, location, taxiState)
+
     case UpdateLocationM(dist) =>
       onUpdateLocation(dist)
         .map(updateResponse => orderAllocationManagerActor ! updateResponse)
@@ -99,6 +103,8 @@ object ResourceActor {
     case class NewOrderRequestM(order: Order)
 
     case class CalculateCostM(order: Order)
+
+    case class GetTaxiStateM(requester: ActorRef)
 
   }
 

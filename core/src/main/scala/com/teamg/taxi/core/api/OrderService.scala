@@ -1,13 +1,14 @@
-package com.teamg.taxi.core.service
+package com.teamg.taxi.core.api
 
 import java.time.format.DateTimeFormatter
 import java.time.{Instant, ZoneId}
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
+import com.teamg.taxi.core.api.OrderService.OrderRequest
 import com.teamg.taxi.core.factory.{OrderDispatcher, OrderFactory}
-import com.teamg.taxi.core.model.{CustomerType, Order, OrderType}
-import com.teamg.taxi.core.service.OrderService._
+import com.teamg.taxi.core.model
+import com.teamg.taxi.core.model.{CustomerType, OrderType}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.{Decoder, Encoder}
 
@@ -27,7 +28,7 @@ class OrderService(orderDispatcher: OrderDispatcher)
       }
     }
 
-  private def toOrder(orderRequest: OrderRequest): Order = {
+  private def toOrder(orderRequest: OrderRequest): model.Order = {
     val clientType = orderRequest.customerType match {
       case "vip" => CustomerType.Vip
       case "supervip" => CustomerType.SuperVip
