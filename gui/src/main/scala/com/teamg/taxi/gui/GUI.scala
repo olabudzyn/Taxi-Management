@@ -3,8 +3,7 @@ package com.teamg.taxi.gui
 import java.util.concurrent.TimeUnit
 
 import com.teamg.taxi.core.api.{Location, Taxi, TaxiState, TaxiSystemState}
-import com.teamg.taxi.core.map.MapProvider
-import com.teamg.taxi.core.{DefaultSimulationConfig, TaxiSystem}
+import com.teamg.taxi.core.{SimulationConfig, TaxiSystem}
 import com.teamg.taxi.gui.GUI._
 import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp
@@ -17,15 +16,13 @@ import scalafx.scene.text.{Text, TextBoundsType}
 import scalafx.scene.{Group, Scene}
 
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
+import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Random, Success}
 
-class GUI extends JFXApp {
-
-  private val cityMap = MapProvider.default
-  val taxiSystem = new TaxiSystem(DefaultSimulationConfig)
-  implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
-
+class GUI(taxiSystem: TaxiSystem,
+          config: SimulationConfig)
+         (implicit executionContext: ExecutionContext) extends JFXApp {
+  
   stage = new PrimaryStage() {
     title = "Taxi System"
     width = boardWidth
@@ -33,7 +30,7 @@ class GUI extends JFXApp {
     scene = createScene()
   }
 
-  private def createScene():Scene = {
+  private def createScene(): Scene = {
     new Scene {
       fill = WhiteSmoke
       val canvas = new Group
@@ -111,8 +108,8 @@ class GUI extends JFXApp {
   }
 
   private def createStaticMap(canvas: Group): Unit = {
-    val circles: List[Circle] = cityMap.getCityMapElements.nodes.map(node => createCircle(node.location.x, node.location.y, Blue))
-    val paths: List[Path] = cityMap.getCityMapElements.edges.map(edge => generatePath(List(new Point2D(edge.first.location.x, edge.first.location.y),
+    val circles: List[Circle] = config.cityMap.getCityMapElements.nodes.map(node => createCircle(node.location.x, node.location.y, Blue))
+    val paths: List[Path] = config.cityMap.getCityMapElements.edges.map(edge => generatePath(List(new Point2D(edge.first.location.x, edge.first.location.y),
       new Point2D(edge.second.location.x, edge.second.location.y))))
     circles.foreach(circle => canvas.getChildren.add(circle))
     paths.foreach(path => canvas.getChildren.add(path))
@@ -135,6 +132,7 @@ class GUI extends JFXApp {
     path.setOpacity(1)
     path
   }
+
   private def randomState(): TaxiState = {
     val number = Random.nextInt(3)
     number match {
