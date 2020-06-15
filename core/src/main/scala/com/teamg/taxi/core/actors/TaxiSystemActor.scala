@@ -15,11 +15,10 @@ import com.teamg.taxi.core.actors.resource.ResourceActor
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.UpdateLocationM
 import com.teamg.taxi.core.actors.systemwatcher.SystemStateWatcher.messages.{TaxiStateM, UnallocatedOrdersM}
 import com.teamg.taxi.core.actors.systemwatcher.TaxiSystemStateFetcher
-import com.teamg.taxi.core.api
 import com.teamg.taxi.core.api.{Location, OrderService, SystemService, TaxiSystemState}
 import com.teamg.taxi.core.factory.AkkaOrderDispatcher
-import com.teamg.taxi.core.map.MapProvider
-import com.teamg.taxi.core.model.{Taxi, TaxiState, TaxiType}
+import com.teamg.taxi.core.model.{Taxi, TaxiState}
+import com.teamg.taxi.core.{SimulationConfig, api}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -27,19 +26,18 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-class TaxiSystemActor(taxiDetails:List[(String, String, TaxiType)])
+class TaxiSystemActor(config: SimulationConfig)
   extends Actor
     with ActorLogging
     with Timers
     with TaxiSystemStateFetcher {
 
   implicit val clock: Clock = Clock.system(ZoneId.of("Europe/Warsaw"))
-  private val scale = 20
   private lazy val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor], clock))
-  private lazy val taxiActors = createTaxiActors(taxiDetails)
-  private val cityMap = MapProvider.default
+  private lazy val taxiActors: Map[String, ActorRef] =
+    config.taxis.map(entry => entry._1 -> context.actorOf(Props(classOf[ResourceActor], clock, entry._2, orderAllocationManager)))
 
-  private implicit val system: ActorSystem = ActorSystem("TaxiSystemManagement")
+  private implicit val system: ActorSystem = ActorSystem("TaxiSystem")
   private implicit val materializer: Materializer = Materializer(context)
 
   import system.dispatcher
@@ -54,10 +52,10 @@ class TaxiSystemActor(taxiDetails:List[(String, String, TaxiType)])
     case Failure(_) => println("Bind failure")
   }
 
-  private val taxisStates: mutable.Map[String, api.Taxi] = mutable.Map(taxiActors.map(entry => entry._1 -> defaultTaxiState(entry._1)).toSeq: _*)
+  private val taxisStates: mutable.Map[String, api.Taxi] = mutable.Map(config.taxis.map(entry => entry._1 -> initialTaxiState(entry._2)).toSeq: _*)
 
-  private def defaultTaxiState(id: String): api.Taxi = {
-    api.Taxi(id, Location(0.0, 0.0), api.TaxiState.Free)
+  private def initialTaxiState(taxi: Taxi): api.Taxi = {
+    api.Taxi(taxi.id, Location(taxi.defaultNode.location.x, taxi.defaultNode.location.y), api.TaxiState.Free)
   }
 
   def receive: Receive = {
@@ -65,9 +63,10 @@ class TaxiSystemActor(taxiDetails:List[(String, String, TaxiType)])
       log.debug("StartM")
       orderAllocationManager ! SendTaxis(taxiActors)
       timers.startTimerAtFixedRate("UpdateKey", UpdateTaxiLocationsM, 1.second)
+      log.info("Taxi system started")
 
     case UpdateTaxiLocationsM =>
-      taxiActors.foreach(entry => entry._2 ! UpdateLocationM(scale))
+      taxiActors.foreach(entry => entry._2 ! UpdateLocationM(config.stepSize))
 
     case TaxiStateM(id, location, taxiState) =>
       val apiLocation = Location(location.x, location.y)
@@ -85,18 +84,12 @@ class TaxiSystemActor(taxiDetails:List[(String, String, TaxiType)])
 
   }
 
-  private def createTaxiActors(taxiDetails: List[(String, String, TaxiType)]): Map[String, ActorRef] = {
-    taxiDetails.map(details =>
-      details._1 -> context.actorOf(Props(classOf[ResourceActor], clock, Taxi(details._1, details._3), orderAllocationManager, cityMap.getNode(details._2).getOrElse(cityMap.randomNode())))
-    ).toMap
-  }
-
   override def getTaxiSystemState(implicit executionContext: ExecutionContext): Future[TaxiSystemState] = {
     implicit val timeout = Timeout(15 seconds)
     ask(orderAllocationManager, GetUnallocatedOrdersM)
       .map(_.asInstanceOf[UnallocatedOrdersM].orders
         .map(order => {
-          val location = cityMap.getNode(order.from).map(_.location).get
+          val location = config.cityMap.getNode(order.from).map(_.location).get
           api.Order(order.id, Location(location.x, location.y))
         }))
       .map(orders => TaxiSystemState(orders, taxisStates.values.toList))

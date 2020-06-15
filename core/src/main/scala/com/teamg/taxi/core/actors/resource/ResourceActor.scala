@@ -9,26 +9,23 @@ import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.TaxiUpdat
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, GetTaxiStateM, NewOrderRequestM, UpdateLocationM}
 import com.teamg.taxi.core.actors.systemwatcher.SystemStateWatcher.messages.TaxiStateM
-import com.teamg.taxi.core.map.{Location, MapProvider, Node}
+import com.teamg.taxi.core.map.{Location, MapProvider}
 import com.teamg.taxi.core.model.TaxiPathState.Finished
 import com.teamg.taxi.core.model.{Order, Taxi, TaxiPathState, TaxiState}
 
 class ResourceActor(clock: Clock,
                     taxi: Taxi,
-                    orderAllocationManagerActor: ActorRef,
-                    initialNode: Node[String]) extends Actor with ActorLogging {
-
-
-  private var location = initialNode.location
-  private var taxiState: TaxiState = TaxiState.Free(initialNode.id)
+                    orderAllocationManagerActor: ActorRef) extends Actor with ActorLogging {
+  private var location = taxi.defaultNode.location
+  private var taxiState: TaxiState = TaxiState.Free(taxi.defaultNode.id)
 
   private val cityMap = MapProvider.default
   private implicit val showLocation: Show[Location] = Show.show(location => s"x(${location.x.show}) y(${location.y.show})")
   private var updateCounter = 0
 
   override def receive: Receive = {
-    case GetTaxiStateM(requester) =>
-      requester ! TaxiStateM(taxi.id, location, taxiState)
+    case GetTaxiStateM =>
+      sender ! TaxiStateM(taxi.id, location, taxiState)
 
     case UpdateLocationM(dist) =>
       onUpdateLocation(dist)
@@ -113,7 +110,7 @@ object ResourceActor {
 
     case class CalculateCostM(order: Order)
 
-    case class GetTaxiStateM(requester: ActorRef)
+    case object GetTaxiStateM
 
   }
 

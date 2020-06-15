@@ -3,6 +3,7 @@ package com.teamg.taxi.core.model
 import java.time.Instant
 
 import com.teamg.taxi.core.actors.resource.TaxiPath
+import com.teamg.taxi.core.map.Node
 
 sealed trait CustomerType
 
@@ -79,7 +80,8 @@ case class Order(id: String,
                  timeStamp: Instant)
 
 case class Taxi(id: String,
-                taxiType: TaxiType)
+                taxiType: TaxiType,
+                defaultNode: Node[String])
 
 sealed trait TaxiPathState
 

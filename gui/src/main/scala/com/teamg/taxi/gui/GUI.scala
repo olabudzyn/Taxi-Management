@@ -2,9 +2,10 @@ package com.teamg.taxi.gui
 
 import java.util.concurrent.TimeUnit
 
-import com.teamg.taxi.core.TaxiSystem
 import com.teamg.taxi.core.api.{Location, Taxi, TaxiState, TaxiSystemState}
 import com.teamg.taxi.core.map.MapProvider
+import com.teamg.taxi.core.{DefaultSimulationConfig, TaxiSystem}
+import com.teamg.taxi.gui.GUI._
 import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
@@ -18,12 +19,11 @@ import scalafx.scene.{Group, Scene}
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext, ExecutionContextExecutor}
 import scala.util.{Failure, Random, Success}
-import com.teamg.taxi.gui.GUI._
 
 class GUI extends JFXApp {
 
   private val cityMap = MapProvider.default
-  val taxiSystem = new TaxiSystem
+  val taxiSystem = new TaxiSystem(DefaultSimulationConfig)
   implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
 
   stage = new PrimaryStage() {
