@@ -18,7 +18,7 @@ class HttpTaxiStateSystemReceiver(url: Uri)
   override def receive(implicit executionContext: ExecutionContext): Future[TaxiSystemState] = {
     Http().singleRequest(HttpRequest(
       method = HttpMethods.GET,
-      uri = url,
+      uri = url
     )).andThen {
       case Success(response) => println(s"Status get success, statusCode:${response.status.intValue()}")
       case Failure(_) => println(s"Status send failure")

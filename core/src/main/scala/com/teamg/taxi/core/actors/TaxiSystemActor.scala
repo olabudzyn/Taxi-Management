@@ -27,7 +27,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.language.postfixOps
 import scala.util.{Failure, Success}
 
-class TaxiSystemActor(taxiIds: List[String])
+class TaxiSystemActor(taxiDetails:List[(String, String, TaxiType)])
   extends Actor
     with ActorLogging
     with Timers
@@ -36,7 +36,7 @@ class TaxiSystemActor(taxiIds: List[String])
   implicit val clock: Clock = Clock.system(ZoneId.of("Europe/Warsaw"))
   private val scale = 20
   private lazy val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor], clock))
-  private lazy val taxiActors = createTaxiActors(taxiIds)
+  private lazy val taxiActors = createTaxiActors(taxiDetails)
   private val cityMap = MapProvider.default
 
   private implicit val system: ActorSystem = ActorSystem("TaxiSystemManagement")
@@ -85,9 +85,9 @@ class TaxiSystemActor(taxiIds: List[String])
 
   }
 
-  private def createTaxiActors(taxiIds: List[String]): Map[String, ActorRef] = {
-    taxiIds.map(id =>
-      id -> context.actorOf(Props(classOf[ResourceActor], clock, Taxi(id, TaxiType.Car), orderAllocationManager, cityMap.randomNode()))
+  private def createTaxiActors(taxiDetails: List[(String, String, TaxiType)]): Map[String, ActorRef] = {
+    taxiDetails.map(details =>
+      details._1 -> context.actorOf(Props(classOf[ResourceActor], clock, Taxi(details._1, details._3), orderAllocationManager, cityMap.getNode(details._2).getOrElse(cityMap.randomNode())))
     ).toMap
   }
 
@@ -114,5 +114,4 @@ object TaxiSystemActor {
     case object UpdateTaxiLocationsM
 
   }
-
 }
