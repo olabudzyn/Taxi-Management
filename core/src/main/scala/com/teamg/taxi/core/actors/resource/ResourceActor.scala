@@ -61,7 +61,7 @@ class ResourceActor(clock: Clock,
           case TaxiPathState.InProgress =>
             updateCounter += 1
             println(s"${taxi.id} course [${order.id}] ${order.customerType} in progress, location: ${location.show}")
-            println(s"Target location: ${cityMap.getNode(order.target).location}")
+            println(s"Target location: ${cityMap.getNode(order.target).getOrElse(cityMap.randomNode()).location}")
             println(s"Edges ${cityMap.edges(order.from, order.target)} ")
             val howMuchRoadLeft = cityMap.minimalDistance(order.from, order.target).getOrElse(0.0) - dist*updateCounter
             println(s"minimalDistance(order.from, order.target) ${cityMap.minimalDistance(order.from, order.target).getOrElse(0.0)}")
