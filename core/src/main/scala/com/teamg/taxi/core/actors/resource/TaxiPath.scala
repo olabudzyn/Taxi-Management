@@ -6,7 +6,7 @@ import com.teamg.taxi.core.model.TaxiPathState
 
 
 class TaxiPath(edges: List[Edge[String]]) {
-  private var currentEdgeIdx: Int = 0
+  var currentEdgeIdx: Int = 0
   private var taxiPathState: TaxiPathState = TaxiPathState.InProgress
 
   def getState: TaxiPathState = taxiPathState

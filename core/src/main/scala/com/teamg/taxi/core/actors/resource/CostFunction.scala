@@ -1,18 +1,28 @@
 package com.teamg.taxi.core.actors
 
-import java.time.{Instant}
-
+import java.time.Instant
 import cats.implicits._
-import com.teamg.taxi.core.model.{Order}
+import com.teamg.taxi.core.model.{Order, TaxiPureState}
 
-class CostFunction(order: Order, taxiCost: Map[String, Option[Double]], taxiLastOrder: Map[String, Option[Instant]]) {
+
+class CostFunction(order: Order, taxiCost: Map[String, Option[Double]], taxiStates: Map[String, TaxiPureState]) {
+
 
   var taxiCostDefined: Map[String, Double] = getTaxiCostDefined(taxiCost)
+  var taxiLastOrder: Map[String, Option[Instant]] = getLastOrder(taxiStates)
   var taxiLastOrderDefinedMilli: Map[String, Long] = getTaxiLastOrderDefinedMilli(taxiLastOrder)
+
 
   def getTaxiCostDefined(taxiCost: Map[String, Option[Double]]): Map[String, Double] = {
     taxiCost.filter(entry => entry._2.isDefined).map(p =>
       p._1 -> p._2.getOrElse(0.0)).toMap
+  }
+
+  def getLastOrder(taxiStates: Map[String, TaxiPureState]): Map[String, Option[Instant]] = {
+    taxiStates.map(p => p._2 match {
+      case TaxiPureState.Free(fromTimestamp: Instant) => (p._1 -> Some(fromTimestamp))
+      case _ => (p._1 -> None)
+    }).toMap
   }
 
   def getTaxiLastOrderDefinedMilli(taxiLastOrder: Map[String, Option[Instant]]): Map[String, Long] = {
