@@ -13,7 +13,7 @@ lazy val commonSettings = Seq(
     "-Xfatal-warnings", // turn compiler warnings into errors
     "-Ypartial-unification" // allow the compiler to unify type constructors of different arities
   ),
-  target := { baseDirectory.value / "target" }
+  target := { baseDirectory.value / "target"}
 )
 
 lazy val resolverSettings = Seq(
@@ -47,6 +47,7 @@ val catsV = "1.4.0"
 val circeV = "0.11.1"
 val scalaGraphV = "1.13.1"
 val scalafxV = "14-R19"
+val scalaTestV = "3.0.8"
 
 
 lazy val core = (project in file("core"))
@@ -86,7 +87,18 @@ lazy val gui = (project in file("gui"))
   )
   .dependsOn(core)
 
+lazy val integration_test = (project in file("integration-test"))
+  .settings(commonSettings)
+  .settings(resolverSettings)
+  .settings(
+    name := "integration-test",
+    libraryDependencies ++= Seq(
+      "org.scalatest"       %% "scalatest"        % scalaTestV    % Test
+
+    )
+  ).dependsOn(gui, core)
+
 lazy val root = (project in file("."))
   .settings(noPublishSettings)
   .settings(name := "root")
-  .aggregate(core, gui)
+  .aggregate(core, gui, integration_test)

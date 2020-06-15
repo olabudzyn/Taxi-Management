@@ -10,14 +10,13 @@ import akka.pattern.ask
 import akka.stream.Materializer
 import akka.util.Timeout
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.{GetUnallocatedOrdersM, SendTaxis}
-import com.teamg.taxi.core.actors.TaxiSystemActor.messages.{StartM, StopM, UpdateTaxiLocationsM}
+import com.teamg.taxi.core.actors.TaxiSystemActor.messages.{StopM, TaxiStateM, UnallocatedOrdersM}
 import com.teamg.taxi.core.actors.resource.ResourceActor
-import com.teamg.taxi.core.actors.resource.ResourceActor.messages.UpdateLocationM
-import com.teamg.taxi.core.actors.systemwatcher.SystemStateWatcher.messages.{TaxiStateM, UnallocatedOrdersM}
-import com.teamg.taxi.core.actors.systemwatcher.TaxiSystemStateFetcher
-import com.teamg.taxi.core.api.{Location, OrderService, SystemService, TaxiSystemState}
-import com.teamg.taxi.core.factory.AkkaOrderDispatcher
-import com.teamg.taxi.core.model.{Taxi, TaxiState}
+import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{GetTaxiStateM, UpdateLocationM}
+import com.teamg.taxi.core.api.{OrderService, SystemService, TaxiSystemState}
+import com.teamg.taxi.core.factory.{AkkaOrderDispatcher, TaxiSystemStateFetcher}
+import com.teamg.taxi.core.map.Location
+import com.teamg.taxi.core.model.{Order, Taxi, TaxiState}
 import com.teamg.taxi.core.{SimulationConfig, api}
 
 import scala.collection.mutable
@@ -55,21 +54,16 @@ class TaxiSystemActor(config: SimulationConfig)
   private val taxisStates: mutable.Map[String, api.Taxi] = mutable.Map(config.taxis.map(entry => entry._1 -> initialTaxiState(entry._2)).toSeq: _*)
 
   private def initialTaxiState(taxi: Taxi): api.Taxi = {
-    api.Taxi(taxi.id, Location(taxi.defaultNode.location.x, taxi.defaultNode.location.y), api.TaxiState.Free)
+    api.Taxi(taxi.id, api.Location(taxi.defaultNode.location.x, taxi.defaultNode.location.y), api.TaxiState.Free)
   }
 
+  system.scheduler.scheduleWithFixedDelay(1 second, 3 seconds)(() => taxiActors.foreach(entry => entry._2 ! GetTaxiStateM))
+  system.scheduler.scheduleWithFixedDelay(1 second, 3 seconds)(() => taxiActors.foreach(entry => entry._2 ! UpdateLocationM(config.stepSize)))
+  system.scheduler.scheduleOnce(1 second)(orderAllocationManager ! SendTaxis(taxiActors))
+
   def receive: Receive = {
-    case StartM =>
-      log.debug("StartM")
-      orderAllocationManager ! SendTaxis(taxiActors)
-      timers.startTimerAtFixedRate("UpdateKey", UpdateTaxiLocationsM, 1.second)
-      log.info("Taxi system started")
-
-    case UpdateTaxiLocationsM =>
-      taxiActors.foreach(entry => entry._2 ! UpdateLocationM(config.stepSize))
-
     case TaxiStateM(id, location, taxiState) =>
-      val apiLocation = Location(location.x, location.y)
+      val apiLocation = api.Location(location.x, location.y)
       val apiTaxiState = taxiState match {
         case _: TaxiState.Free => api.TaxiState.Free
         case _: TaxiState.Occupied => api.TaxiState.Occupied
@@ -81,7 +75,6 @@ class TaxiSystemActor(config: SimulationConfig)
       bindingFuture
         .flatMap(_.unbind()) // trigger unbinding from the port
         .onComplete(_ => system.terminate()) // and shutdown when done
-
   }
 
   override def getTaxiSystemState(implicit executionContext: ExecutionContext): Future[TaxiSystemState] = {
@@ -90,7 +83,7 @@ class TaxiSystemActor(config: SimulationConfig)
       .map(_.asInstanceOf[UnallocatedOrdersM].orders
         .map(order => {
           val location = config.cityMap.getNode(order.from).map(_.location).get
-          api.Order(order.id, Location(location.x, location.y))
+          api.Order(order.id, api.Location(location.x, location.y))
         }))
       .map(orders => TaxiSystemState(orders, taxisStates.values.toList))
   }
@@ -100,11 +93,11 @@ object TaxiSystemActor {
 
   object messages {
 
-    case object StartM
+    case class TaxiStateM(id: String, location: Location, taxiState: TaxiState)
+
+    case class UnallocatedOrdersM(orders: List[Order])
 
     case object StopM
-
-    case object UpdateTaxiLocationsM
 
   }
 }

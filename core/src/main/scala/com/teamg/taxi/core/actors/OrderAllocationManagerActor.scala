@@ -6,8 +6,8 @@ import akka.actor.{Actor, ActorRef, Props}
 import cats.Eq
 import com.teamg.taxi.core.actors.OrderActor.messages.{PrintOrderActorIdM, StopOrderActorM}
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
+import com.teamg.taxi.core.actors.TaxiSystemActor.messages.UnallocatedOrdersM
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, NewOrderRequestM}
-import com.teamg.taxi.core.actors.systemwatcher.SystemStateWatcher.messages.UnallocatedOrdersM
 import com.teamg.taxi.core.model.{Order, Taxi, TaxiPureState}
 import com.teamg.taxi.core.utils.Utils
 

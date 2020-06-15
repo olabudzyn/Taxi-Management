@@ -4,13 +4,31 @@ import com.teamg.taxi.core.map.MapUtils.createEdge
 
 object MapProvider {
   val default: CityMap[String] = {
-    val nodeLabels = List("A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "R", "S", "T", "U")
-    val locationList = List(Location(173, 132), Location(273, 218), Location(402, 103), Location(546, 136), Location(590, 187), Location(720, 158),
-      Location(651, 353), Location(497, 270), Location(566, 454), Location(673, 596), Location(460, 740), Location(445, 538), Location(353, 580),
-      Location(114, 607), Location(260, 522), Location(333, 416), Location(117, 410), Location(86, 267), Location(217, 288), Location(368, 310))
-    val nodes = (nodeLabels, locationList).zipped
-      .map((label, location) => Node(label, location))
-      .foldLeft(Map[String, Node[String]]()) { (m, s) => m + (s.id -> s) }
+    val nodesData = Map(
+      "A" -> Location(173, 132),
+      "B" -> Location(273, 218),
+      "C" -> Location(402, 103),
+      "D" -> Location(546, 136),
+      "E" -> Location(590, 187),
+      "F" -> Location(720, 158),
+      "G" -> Location(651, 353),
+      "H" -> Location(497, 270),
+      "I" -> Location(566, 454),
+      "J" -> Location(673, 596),
+      "K" -> Location(460, 740),
+      "L" -> Location(445, 538),
+      "M" -> Location(353, 580),
+      "N" -> Location(114, 607),
+      "O" -> Location(260, 522),
+      "P" -> Location(333, 416),
+      "R" -> Location(117, 410),
+      "S" -> Location(86, 267),
+      "T" -> Location(217, 288),
+      "U" -> Location(368, 310)
+    )
+
+    val nodes = nodesData
+      .map(entry => entry._1 -> Node(entry._1, entry._2))
 
     val edges =
       createEdge(nodes("A"), nodes("B")) ::

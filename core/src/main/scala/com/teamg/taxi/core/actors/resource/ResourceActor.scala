@@ -7,8 +7,8 @@ import cats.Show
 import cats.implicits._
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.TaxiUpdateResponse.{TaxiFinishedOrderM, TaxiPickUpCustomerM}
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
+import com.teamg.taxi.core.actors.TaxiSystemActor.messages.TaxiStateM
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, GetTaxiStateM, NewOrderRequestM, UpdateLocationM}
-import com.teamg.taxi.core.actors.systemwatcher.SystemStateWatcher.messages.TaxiStateM
 import com.teamg.taxi.core.map.{Location, MapProvider}
 import com.teamg.taxi.core.model.TaxiPathState.Finished
 import com.teamg.taxi.core.model.{Order, Taxi, TaxiPathState, TaxiState}

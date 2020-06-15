@@ -9,5 +9,6 @@ object Main extends App {
   implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
   val simulationConfig = DefaultSimulationConfig
   val taxiSystem = new TaxiSystem(simulationConfig)
+
   new GUI(taxiSystem, simulationConfig).main(Array.empty)
 }
