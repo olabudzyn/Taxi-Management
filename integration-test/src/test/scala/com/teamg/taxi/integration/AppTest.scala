@@ -9,6 +9,4 @@ object AppTest extends BaseApp {
   startGUI
 
   sendOrderRequest(OrderRequest("I", "S", "normal", "normal", "abc"))
-  sendOrderRequest(OrderRequest("I", "S", "normal", "normal", "abc"))
-  sendOrderRequest(OrderRequest("I", "S", "normal", "normal", "abc"))
 }

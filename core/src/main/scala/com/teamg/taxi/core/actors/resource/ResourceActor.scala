@@ -35,7 +35,8 @@ class ResourceActor(clock: Clock,
       val cost = taxiState match {
         case TaxiState.Free(nodeId) =>
           cityMap.minimalDistance(nodeId, order.from)
-        case _: TaxiState.Occupied => None
+        case  TaxiState.Occupied(actualOrder, taxiPath) =>
+          Some(taxiPath.rest + cityMap.minimalDistance(actualOrder.target, order.from).getOrElse(0.0))
         case _: TaxiState.OnWayToCustomer => None
       }
       sender ! TaxiCostResponse(taxi, cost)
