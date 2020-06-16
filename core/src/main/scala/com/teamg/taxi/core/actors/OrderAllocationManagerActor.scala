@@ -12,6 +12,7 @@ import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
 import com.teamg.taxi.core.actors.TaxiSystemActor.messages.UnallocatedOrdersM
 import com.teamg.taxi.core.actors.order.SchedulingHelper._
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, NewOrderRequestM}
+import com.teamg.taxi.core.model.CustomerType.Vip
 import com.teamg.taxi.core.model.TaxiType.Van
 import com.teamg.taxi.core.model._
 
@@ -73,9 +74,9 @@ class OrderAllocationManagerActor(config: SimulationConfig,
   actorSystem.scheduler.scheduleAtFixedRate(10 seconds, 100 seconds)(() => scheduleTaxis())
 
   private def scheduleTaxis(): Future[List[Unit]] = {
-    val orderBidsFuture = ordersmap
+    val orderBidsFuture = reorderRequests(ordersmap.toMap)
       .map(entry => entry._1 -> entry._2.order)
-      .map(entry => getBids(entry._2).map(bids => OrderBids(entry._2, bids)))
+      .map(entry => getBids(entry._2).map(bids => OrderBids(entry._2, bids))).toList
 
     Future.sequence(orderBidsFuture)
       .map(_.toList)
@@ -87,9 +88,16 @@ class OrderAllocationManagerActor(config: SimulationConfig,
 
   private def getBids(order: Order): Future[Map[String, Double]] = {
     for {
+
       filtered <- getPossibleTaxisByType(order.taxiType)
       bids <- getBidsFromActors(order, filtered.keys.toList)
     } yield bids
+  }
+
+  private def reorderRequests(orders: Map[String, OrderRequest]): Map[String, OrderRequest] = {
+    val vips = orders.filter(_._2.order.customerType === Vip)
+    val others = orders.filter(_._2.order.customerType =!= Vip)
+    vips ++ others
   }
 
   private def getPossibleTaxisByType(taxiType: TaxiType): Future[Map[String, Taxi]] = {
@@ -131,6 +139,7 @@ class OrderAllocationManagerActor(config: SimulationConfig,
 
   implicit val eqFoo: Eq[TaxiPureState] = Eq.fromUniversalEquals
   implicit val eqTaxiType: Eq[TaxiType] = Eq.fromUniversalEquals
+  implicit val eqCustomerType: Eq[CustomerType] = Eq.fromUniversalEquals
 }
 
 
