@@ -1,5 +1,6 @@
 package com.teamg.taxi.gui
 
+import java.io.FileInputStream
 import java.util.concurrent.TimeUnit
 
 import com.teamg.taxi.core.api.{Location, Order, Taxi, TaxiState}
@@ -9,6 +10,7 @@ import scalafx.animation.AnimationTimer
 import scalafx.application.JFXApp
 import scalafx.application.JFXApp.PrimaryStage
 import scalafx.geometry.Point2D
+import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.paint.Color
 import scalafx.scene.paint.Color._
 import scalafx.scene.shape._
@@ -31,35 +33,35 @@ class GUI(taxiSystem: TaxiSystem,
     scene = createScene()
   }
 
-  private def createScene(): Scene = {
-    new Scene {
-      fill = boardColor
-      val canvas = new Group
+  private def createScene(): Scene = new Scene {
+    fill = boardColor
+    val canvas = new Group
 
-      createStaticMap(canvas)
-      createLegend(canvas)
+    createStaticMap(canvas)
+    createLegend(canvas)
 
-      var taxiWithLabel = initializeView(canvas, config)
-      var orderList: List[Rectangle] = List.empty
+    accident(getRandomLocation, canvas)
 
-      content = canvas
+    var taxiWithLabel = initializeView(canvas, config)
+    var orderList: List[Rectangle] = List.empty
 
-      val timer: AnimationTimer = AnimationTimer { now => {
-        if (now - lastUpdate >= refreshTime) {
-          val future = taxiSystem.receive.map(r => (r.orders, r.taxis))
-          val responseTaxiState = Await.result(future, Duration(10, TimeUnit.SECONDS))
-          val newTaxiState = updateTaxiValues(responseTaxiState._2)
-          val newResponseOrder = updateOrderValues(responseTaxiState._1)
-          updateView(canvas, taxiWithLabel, newTaxiState, orderList, newResponseOrder)
-          taxiWithLabel = newTaxiState
-          orderList = newResponseOrder
-          lastUpdate = now
-        }
+    content = canvas
+
+    val timer: AnimationTimer = AnimationTimer { now => {
+      if (now - lastUpdate >= refreshTime) {
+        val future = taxiSystem.receive.map(r => (r.orders, r.taxis))
+        val responseTaxiState = Await.result(future, Duration(10, TimeUnit.SECONDS))
+        val newTaxiState = updateTaxiValues(responseTaxiState._2)
+        val newResponseOrder = updateOrderValues(responseTaxiState._1)
+        updateView(canvas, taxiWithLabel, newTaxiState, orderList, newResponseOrder)
+        taxiWithLabel = newTaxiState
+        orderList = newResponseOrder
+        lastUpdate = now
       }
-      }
-
-      timer.start()
     }
+    }
+
+    timer.start()
   }
 
   private def initializeView(canvas: Group, config: SimulationConfig): Tuple2Zipped[Text, List[Text], Circle, List[Circle]] = {
@@ -71,6 +73,16 @@ class GUI(taxiSystem: TaxiSystem,
     taxiLabels.foreach(label => canvas.getChildren.add(label))
 
     (taxiLabels, taxiCircles).zipped
+  }
+
+  private def accident(location: Location, canvas:Group): Unit = {
+    val image = new Image(new FileInputStream("gui/src/main/scala/com/teamg/taxi/gui/pictures/picture2.png"))
+    val imageView = new ImageView()
+    imageView.image = image
+    imageView.setFitHeight(imageSize)
+    imageView.setFitWidth(imageSize)
+    imageView.relocate(location.x, location.y)
+    canvas.getChildren.add(imageView)
   }
 
   private def updateTaxiValues(taxis: List[Taxi]): Tuple2Zipped[Text, List[Text], Circle, List[Circle]] = {
@@ -185,6 +197,7 @@ class GUI(taxiSystem: TaxiSystem,
 object GUI {
   val pointSize = 10
   val nodeSize = 15
+  val imageSize = 30
   val squareSize = 2 * pointSize
   val boardWidth = 800
   val boardHeight = 800
