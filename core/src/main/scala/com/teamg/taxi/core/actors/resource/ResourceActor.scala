@@ -3,6 +3,7 @@ package com.teamg.taxi.core.actors.resource
 import java.time.Clock
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
+import com.teamg.taxi.core.factory.AccidentsProvider
 //import cats.Show
 import cats.implicits._
 import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.TaxiUpdateResponse.{TaxiFinishedOrderM, TaxiPickUpCustomerM}
@@ -16,7 +17,8 @@ import com.teamg.taxi.core.model.{Order, Taxi, TaxiPathState, TaxiState}
 class ResourceActor(clock: Clock,
                     taxi: Taxi,
                     orderAllocationManagerActor: ActorRef,
-                    cityMap: CityMap[String]) extends Actor with ActorLogging {
+                    cityMap: CityMap[String],
+                    accidentsProvider: AccidentsProvider) extends Actor with ActorLogging {
   private var location = taxi.defaultNode.location
   private var taxiState: TaxiState = TaxiState.Free(taxi.defaultNode.id)
 
@@ -34,9 +36,9 @@ class ResourceActor(clock: Clock,
     case CalculateCostM(order) =>
       val cost = taxiState match {
         case TaxiState.Free(nodeId) =>
-          cityMap.minimalDistance(nodeId, order.from)
-        case  TaxiState.Occupied(actualOrder, taxiPath) =>
-          Some(taxiPath.rest + cityMap.minimalDistance(actualOrder.target, order.from).getOrElse(0.0))
+          cityMap.minimalDistance(nodeId, order.from, accidentsProvider.getAccidents)
+        case TaxiState.Occupied(actualOrder, taxiPath) => None
+          Some(taxiPath.rest + cityMap.minimalDistance(actualOrder.target, order.from, accidentsProvider.getAccidents).getOrElse(0.0))
         case _: TaxiState.OnWayToCustomer => None
       }
       sender ! TaxiCostResponse(taxi, cost)
@@ -60,7 +62,7 @@ class ResourceActor(clock: Clock,
         location = taxiPath.update(location, dist)
         taxiPath.getState match {
           case Finished =>
-            val edges = cityMap.edges(order.from, order.target)
+            val edges = cityMap.edges(order.from, order.target, accidentsProvider.getAccidents)
             log.info(s"${taxi.id} arrived to customer: [${order.id} (${order.customerType})], way to target: ${edges.map(_.map(_.label.value)).get}")
             taxiState = TaxiState.Occupied(order, TaxiPath(edges.get))
             Some(TaxiPickUpCustomerM(taxi, order.id))
@@ -74,12 +76,12 @@ class ResourceActor(clock: Clock,
     taxiState match {
       case TaxiState.Free(nodeId) =>
         if (order.from === nodeId) {
-          val startEdges = cityMap.edges(order.from, order.target)
+          val startEdges = cityMap.edges(order.from, order.target, accidentsProvider.getAccidents)
           log.info(s"${taxi.id} was in place, picked up customer: [${order.id} (${order.customerType})], way to target: ${startEdges.map(_.map(_.label.value)).get}")
           taxiState = TaxiState.Occupied(order, TaxiPath(startEdges.get))
           TaxiOrderResponse.TaxiPickUpCustomerM(taxi, order.id)
         } else {
-          val startEdges = cityMap.edges(nodeId, order.from)
+          val startEdges = cityMap.edges(nodeId, order.from, accidentsProvider.getAccidents)
           log.info(s"${taxi.id} is on the way to customer: [${order.id} (${order.customerType})], way to customer: ${startEdges.map(_.map(_.label.value)).get}")
           taxiState = TaxiState.OnWayToCustomer(order, TaxiPath(startEdges.get))
           TaxiOrderResponse.TaxiOnWayToCustomerM(taxi)

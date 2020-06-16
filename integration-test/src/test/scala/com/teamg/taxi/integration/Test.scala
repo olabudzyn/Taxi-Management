@@ -3,7 +3,7 @@ package com.teamg.taxi.integration
 import java.util.concurrent.Executors
 
 import com.teamg.taxi.core.api.OrderService.OrderRequest
-import com.teamg.taxi.core.{DefaultSimulationConfig, ServiceConfig, SimulationOrderSender, TaxiSystem}
+import com.teamg.taxi.core.{DefaultSimulationConfig, ServiceConfig, SimulationSender, TaxiSystem}
 import com.teamg.taxi.gui.GUI
 import org.scalatest.time.{Seconds, Span}
 import org.scalatest.{Matchers, WordSpec}
@@ -16,7 +16,7 @@ class Test extends WordSpec
 
   private val sleepValue = 100000
 
-  val orderSender = new SimulationOrderSender(ServiceConfig.orderUrl)
+  val orderSender = new SimulationSender(ServiceConfig.orderUrl, ServiceConfig.accidentUrl)
 
   override implicit val patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(150, Seconds), interval = Span(15, Seconds))

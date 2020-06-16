@@ -20,3 +20,6 @@ object Edge {
   }
 
 }
+
+case class Accident[ID](from: ID, to: ID, weight: Double, location: Location)
+

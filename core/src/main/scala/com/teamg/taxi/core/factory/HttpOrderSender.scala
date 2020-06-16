@@ -4,13 +4,14 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.Http
 import akka.http.scaladsl.model._
 import com.teamg.taxi.core.api.OrderService.OrderRequest
+import com.typesafe.scalalogging.LazyLogging
 import io.circe.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
 
 class HttpOrderSender(url: Uri)
-                     (implicit actorSystem: ActorSystem) extends OrderSender {
+                     (implicit actorSystem: ActorSystem) extends OrderSender with LazyLogging{
 
   override def send(orderRequest: OrderRequest)
                    (implicit executionContext: ExecutionContext): Future[Unit] = {

@@ -14,12 +14,19 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
 
   implicit val eqFoo: Eq[ID] = Eq.fromUniversalEquals
 
-  def minimalDistance(fromId: ID, toId: ID): Option[Double] = {
-    shortestPath(fromId, toId).map(_.weight)
+  def minimalDistance(fromId: ID, toId: ID, accidents: List[Accident[ID]]): Option[Double] = {
+    shortestPath(fromId, toId, accidents).map(_.weight)
   }
 
-  def edges(fromId: ID, toId: ID): Option[List[Edge[ID]]] = {
-    edgesOnPath(fromId, toId)
+  def edges(fromId: ID, toId: ID, accidents: List[Accident[ID]]): Option[List[Edge[ID]]] = {
+    edgesOnPath(fromId, toId, accidents)
+  }
+
+  def getCenter(first: ID, second: ID): Option[Location] = {
+    for {
+      firstNode <- getNode(first)
+      secondNode <- getNode(second)
+    } yield LocationUtils.center(firstNode.location, secondNode.location)
   }
 
   def getCityMapElements: CityMapElements[ID] = {
@@ -39,8 +46,8 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
     getRandomElement(nodes, new Random())
   }
 
-  private def edgesOnPath(fromId: ID, toId: ID): Option[List[Edge[ID]]] = {
-    val path = shortestPath(fromId, toId)
+  private def edgesOnPath(fromId: ID, toId: ID, accidents: List[Accident[ID]]): Option[List[Edge[ID]]] = {
+    val path = shortestPath(fromId, toId, accidents)
       .map {
         _.edges.map { e =>
           val from = e.head.value
@@ -74,12 +81,19 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
     Edge(Label(s"${first.id}-${second.id}"), first, second, weight)
   }
 
-  private def shortestPath(fromId: ID, toId: ID): Option[graph.Path] = {
+  private def shortestPath(fromId: ID, toId: ID, accidents: List[Accident[ID]]): Option[graph.Path] = {
     for {
       nodeFrom <- graph.nodes.find(_.id === fromId)
       nodeTo <- graph.nodes.find(_.id === toId)
-      shortestPath <- nodeFrom.shortestPathTo(nodeTo)
+      shortestPath <- nodeFrom.shortestPathTo(nodeTo, edge => getWeight(edge.head.value, edge.to.value, accidents, edge.weight))
     } yield shortestPath
+  }
+
+  private def getWeight(first: Node[ID], second: Node[ID], accidents: List[Accident[ID]], weight: Double): Double = {
+    accidents.find { accident =>
+      val list = List(accident.from, accident.to)
+      list.contains(first.id) && list.contains(second.id)
+    }.map(_.weight + weight).getOrElse(weight)
   }
 }
 

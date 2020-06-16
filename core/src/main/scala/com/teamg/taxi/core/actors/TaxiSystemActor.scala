@@ -13,7 +13,7 @@ import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages.{GetUnall
 import com.teamg.taxi.core.actors.TaxiSystemActor.messages.{StopM, TaxiStateM, UnallocatedOrdersM}
 import com.teamg.taxi.core.actors.resource.ResourceActor
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{GetTaxiStateM, UpdateLocationM}
-import com.teamg.taxi.core.api.{OrderService, SystemService, TaxiSystemState}
+import com.teamg.taxi.core.api.{AccidentService, OrderService, SystemService, TaxiSystemState}
 import com.teamg.taxi.core.factory.{AkkaOrderDispatcher, TaxiSystemStateFetcher}
 import com.teamg.taxi.core.map.Location
 import com.teamg.taxi.core.model.{Order, Taxi, TaxiState}
@@ -34,7 +34,7 @@ class TaxiSystemActor(config: SimulationConfig)
   implicit val clock: Clock = Clock.system(ZoneId.of("Europe/Warsaw"))
   private lazy val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor], config, clock, system.dispatcher))
   private lazy val taxiActors: Map[String, ActorRef] =
-    config.taxis.map(entry => entry._1 -> context.actorOf(Props(classOf[ResourceActor], clock, entry._2, orderAllocationManager, config.cityMap)))
+    config.taxis.map(entry => entry._1 -> context.actorOf(Props(classOf[ResourceActor], clock, entry._2, orderAllocationManager, config.cityMap, accidentService)))
 
   private implicit val system: ActorSystem = ActorSystem("TaxiSystem")
   private implicit val materializer: Materializer = Materializer(context)
@@ -43,8 +43,9 @@ class TaxiSystemActor(config: SimulationConfig)
 
   private val orderService = new OrderService(orderDispatcher = new AkkaOrderDispatcher(orderAllocationManager))
   private val stateService = new SystemService(this)
+  private val accidentService = new AccidentService(config.cityMap)
 
-  private val route = orderService.route ~ stateService.route
+  private val route = orderService.route ~ stateService.route ~ accidentService.route
 
   private val bindingFuture = Http().bindAndHandle(route, "localhost", 8080).andThen {
     case Success(_) => println("Bind success")
@@ -85,7 +86,7 @@ class TaxiSystemActor(config: SimulationConfig)
           val location = config.cityMap.getNode(order.from).map(_.location).get
           api.Order(order.id, api.Location(location.x, location.y))
         }))
-      .map(orders => TaxiSystemState(orders, taxisStates.values.toList))
+      .map(orders => TaxiSystemState(orders, taxisStates.values.toList, accidentService.getApiAccidents))
   }
 }
 
