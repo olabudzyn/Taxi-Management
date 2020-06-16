@@ -68,8 +68,10 @@ lazy val core = (project in file("core"))
       "io.circe"            %% "circe-generic-extras" % circeV,
       "org.typelevel"       %% "cats-core"            % catsV,
       "org.scala-graph"     %% "graph-core"           % scalaGraphV,
+      "com.typesafe.scala-logging" %% "scala-logging" % "3.9.0",
+      "ch.qos.logback"      % "logback-classic"       % "1.1.2",
 
-      "org.scalatest"       %% "scalatest"            % "3.0.8"             % Test
+      "org.scalatest"       %% "scalatest"            % "3.0.8"             % Test,
     )
   )
 
