@@ -18,6 +18,8 @@ object TaxiState {
 
 }
 
+sealed trait TaxoType
+
 case class Order(id: String, location: Location)
 
 case class Taxi(id: String, location: Location, taxiState: TaxiState)

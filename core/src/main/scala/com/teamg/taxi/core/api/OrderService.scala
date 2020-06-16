@@ -8,7 +8,7 @@ import akka.http.scaladsl.server.Route
 import com.teamg.taxi.core.api.OrderService.OrderRequest
 import com.teamg.taxi.core.factory.{OrderDispatcher, OrderFactory}
 import com.teamg.taxi.core.model
-import com.teamg.taxi.core.model.{CustomerType, OrderType}
+import com.teamg.taxi.core.model.{CustomerType, OrderType, TaxiType}
 import de.heikoseeberger.akkahttpcirce.FailFastCirceSupport
 import io.circe.{Decoder, Encoder}
 
@@ -40,7 +40,12 @@ class OrderService(orderDispatcher: OrderDispatcher)
       case "predefined" => OrderType.Predefined(orderRequest.time.get)
     }
 
-    OrderFactory.create(orderRequest.from, orderRequest.to, clientType, orderType)
+    val taxiType = orderRequest.taxiType match {
+      case "van" => TaxiType.Van
+      case _ => TaxiType.Car
+    }
+
+    OrderFactory.create(orderRequest.from, orderRequest.to, taxiType, clientType, orderType)
   }
 }
 
@@ -54,22 +59,24 @@ object OrderService {
                           to: String,
                           customerType: String,
                           orderType: String,
+                          taxiType: String,
                           time: Option[Instant] = None)
 
   private implicit val instantEncoder: Encoder[Instant] = Encoder.encodeString.contramap(value => formatter.format(value))
   private implicit val instantDecoder: Decoder[Instant] = Decoder.decodeString.map(value => Instant.from(formatter.parse(value)))
 
   implicit val orderRequestEncoder: Encoder[OrderRequest] =
-    Encoder.forProduct5(keys.from, keys.to, keys.customerType, keys.orderType, keys.time)(req => (req.from, req.to, req.customerType, req.orderType, req.time))
+    Encoder.forProduct6(keys.from, keys.to, keys.customerType, keys.orderType, keys.taxiType, keys.time)(req => (req.from, req.to, req.customerType, req.orderType, req.taxiType, req.time))
 
   implicit val orderRequestDecoder: Decoder[OrderRequest] =
-    Decoder.forProduct5(keys.from, keys.to, keys.customerType, keys.orderType, keys.time)(OrderRequest.apply)
+    Decoder.forProduct6(keys.from, keys.to, keys.customerType, keys.orderType, keys.taxiType, keys.time)(OrderRequest.apply)
 
   object keys {
     val from = "from"
     val to = "to"
     val customerType = "customerType"
     val orderType = "orderType"
+    val taxiType = "taxiType"
     val time = "time"
   }
 

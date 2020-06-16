@@ -6,12 +6,18 @@ import com.teamg.taxi.core.model.TaxiPathState
 
 
 class TaxiPath(edges: List[Edge[String]]) {
-  var currentEdgeIdx: Int = 0
+  private var currentEdgeIdx: Int = 0
+  private var counter = 0
+  private val allLength = edges.map(_.weight).sum
+  var rest: Double = allLength
+
   private var taxiPathState: TaxiPathState = TaxiPathState.InProgress
 
   def getState: TaxiPathState = taxiPathState
 
   def update(location: Location, dist: Double): Location = {
+    counter += 1
+    rest = allLength - counter * dist
     updateLocation(location, dist)
   }
 

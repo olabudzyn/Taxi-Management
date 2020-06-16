@@ -1,5 +1,7 @@
 package com.teamg.taxi.integration
 
+import java.util.concurrent.Executors
+
 import com.teamg.taxi.core.api.OrderService.OrderRequest
 import com.teamg.taxi.core.{DefaultSimulationConfig, ServiceConfig, SimulationOrderSender, TaxiSystem}
 import com.teamg.taxi.gui.GUI
@@ -19,16 +21,26 @@ class Test extends WordSpec
   override implicit val patienceConfig: PatienceConfig =
     PatienceConfig(timeout = Span(150, Seconds), interval = Span(15, Seconds))
 
+  val ec = ExecutionContext.fromExecutor(Executors.newFixedThreadPool(1))
+
   "System " should {
     "receive order" when {
       "abc" in {
         implicit val executionContext: ExecutionContextExecutor = ExecutionContext.global
         val simulationConfig = DefaultSimulationConfig
         val taxiSystem = new TaxiSystem(simulationConfig)
-        new GUI(taxiSystem, simulationConfig).main(Array.empty)
+        Future(new GUI(taxiSystem, simulationConfig).main(Array.empty))
+
+        Thread.sleep(5000)
+
+        for {
+          _ <- orderSender.send(OrderRequest("A", "J", "normal", "normal", "car"))(ec)
+        } yield ()
+
+//        orderSender.send(OrderRequest("A", "J", "normal", "normal"))(ec)
 
         val task = Future.sequence(Seq(
-          orderSender.send(OrderRequest("A", "J", "normal", "normal")),
+//          orderSender.send(OrderRequest("A", "J", "normal", "normal"))(ec),
           Future(Thread.sleep(sleepValue))
         ))
 

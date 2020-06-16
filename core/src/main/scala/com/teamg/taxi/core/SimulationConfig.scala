@@ -14,7 +14,7 @@ trait SimulationConfig {
 }
 
 object DefaultSimulationConfig extends SimulationConfig {
-  override def stepSize: Double = 20
+  override def stepSize: Double = 40
 
   override def taxis: Map[String, Taxi] = Map(
     "Taxi1" -> TaxiData("A", Car),

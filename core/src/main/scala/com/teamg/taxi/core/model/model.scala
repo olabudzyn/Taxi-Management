@@ -75,6 +75,7 @@ object OrderState {
 case class Order(id: String,
                  from: String,
                  target: String,
+                 taxiType: TaxiType,
                  customerType: CustomerType,
                  orderType: OrderType,
                  timeStamp: Instant)

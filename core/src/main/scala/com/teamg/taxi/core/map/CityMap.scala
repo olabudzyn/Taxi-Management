@@ -3,9 +3,9 @@ package com.teamg.taxi.core.map
 import cats.Eq
 import cats.implicits._
 import com.teamg.taxi.core.map.Edge.Label
+import com.teamg.taxi.core.utils.Utils._
 import scalax.collection.Graph
 import scalax.collection.edge.WLUnDiEdge
-import com.teamg.taxi.core.utils.Utils._
 
 import scala.util.Random
 
@@ -24,7 +24,7 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
 
   def getCityMapElements: CityMapElements[ID] = {
     val nodes = graph.nodes.map(n => Node(n.id, n.location)).toList
-    val edges =  graph.edges.map(e => Edge(Label.empty, e.head.value, e.to.value, e.weight)).toList
+    val edges = graph.edges.map(e => Edge(Label.empty, e.head.value, e.to.value, e.weight)).toList
     CityMapElements(nodes, edges)
   }
 
@@ -40,10 +40,38 @@ class CityMap[ID](graph: Graph[Node[ID], WLUnDiEdge]) {
   }
 
   private def edgesOnPath(fromId: ID, toId: ID): Option[List[Edge[ID]]] = {
-    shortestPath(fromId, toId)
-      .map(_.edges.map(e => Edge(Label.empty, e.head.value, e.to.value, e.weight))
-        .toList
-      )
+    val path = shortestPath(fromId, toId)
+      .map {
+        _.edges.map { e =>
+          val from = e.head.value
+          val to = e.to.value
+          createEdge(from, to, e.weight)
+        }.toList
+      }
+
+    val firstEdge = path.map(_.head).get
+    val properFirstEdge = if (firstEdge.first.id === fromId) {
+      firstEdge
+    } else {
+      createEdge(firstEdge.second, firstEdge.first, firstEdge.weight)
+    }
+
+    path.map { list =>
+      list.drop(1).scanLeft(properFirstEdge) { (prev, edge) =>
+        if (prev.second.id === edge.first.id) {
+          edge
+        }
+        else if (prev.second.id === edge.second.id) {
+          createEdge(edge.second, edge.first, edge.weight)
+        } else {
+          edge
+        }
+      }
+    }
+  }
+
+  private def createEdge(first: Node[ID], second: Node[ID], weight: Double): Edge[ID] = {
+    Edge(Label(s"${first.id}-${second.id}"), first, second, weight)
   }
 
   private def shortestPath(fromId: ID, toId: ID): Option[graph.Path] = {

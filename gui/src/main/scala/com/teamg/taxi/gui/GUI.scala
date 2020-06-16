@@ -188,7 +188,7 @@ object GUI {
   val squareSize = 2 * pointSize
   val boardWidth = 800
   val boardHeight = 800
-  val refreshTime = 1000000000L
+  val refreshTime = 500000000L
   val padding = 12
   var lastUpdate = 0L
   val freeStateColor = YellowGreen

@@ -32,9 +32,9 @@ class TaxiSystemActor(config: SimulationConfig)
     with TaxiSystemStateFetcher {
 
   implicit val clock: Clock = Clock.system(ZoneId.of("Europe/Warsaw"))
-  private lazy val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor], clock))
+  private lazy val orderAllocationManager = context.actorOf(Props(classOf[OrderAllocationManagerActor], config, clock, system.dispatcher))
   private lazy val taxiActors: Map[String, ActorRef] =
-    config.taxis.map(entry => entry._1 -> context.actorOf(Props(classOf[ResourceActor], clock, entry._2, orderAllocationManager)))
+    config.taxis.map(entry => entry._1 -> context.actorOf(Props(classOf[ResourceActor], clock, entry._2, orderAllocationManager, config.cityMap)))
 
   private implicit val system: ActorSystem = ActorSystem("TaxiSystem")
   private implicit val materializer: Materializer = Materializer(context)
