@@ -3,7 +3,7 @@ package com.teamg.taxi.gui
 import java.io.FileInputStream
 import java.util.concurrent.TimeUnit
 
-import com.teamg.taxi.core.api.{Location, Order, Taxi, TaxiState}
+import com.teamg.taxi.core.api._
 import com.teamg.taxi.core.{SimulationConfig, TaxiSystem}
 import com.teamg.taxi.gui.GUI._
 import scalafx.animation.AnimationTimer
@@ -40,10 +40,9 @@ class GUI(taxiSystem: TaxiSystem,
     createStaticMap(canvas)
     createLegend(canvas)
 
-    accident(getRandomLocation, canvas)
-
     var taxiWithLabel = initializeView(canvas, config)
     var orderList: List[Rectangle] = List.empty
+    var accidentList: List[ImageView] = List.empty
 
     content = canvas
 
@@ -52,9 +51,11 @@ class GUI(taxiSystem: TaxiSystem,
         val responseTaxiState = Await.result(taxiSystem.receive, Duration(10, TimeUnit.SECONDS))
         val newTaxiState = updateTaxiValues(responseTaxiState.taxis)
         val newResponseOrder = updateOrderValues(responseTaxiState.orders)
-        updateView(canvas, taxiWithLabel, newTaxiState, orderList, newResponseOrder)
+        val newAccidentList = updateAccidentValues(responseTaxiState.accidents)
+        updateView(canvas, taxiWithLabel, newTaxiState, orderList, newResponseOrder, accidentList, newAccidentList)
         taxiWithLabel = newTaxiState
         orderList = newResponseOrder
+        accidentList = newAccidentList
         lastUpdate = now
       }
     }
@@ -74,14 +75,14 @@ class GUI(taxiSystem: TaxiSystem,
     (taxiLabels, taxiCircles).zipped
   }
 
-  private def accident(location: Location, canvas:Group): Unit = {
+  private def getAccidents(location: Location): ImageView = {
     val image = new Image(new FileInputStream("gui/src/main/scala/com/teamg/taxi/gui/pictures/picture2.png"))
     val imageView = new ImageView()
     imageView.image = image
     imageView.setFitHeight(imageSize)
     imageView.setFitWidth(imageSize)
-    imageView.relocate(location.x, location.y)
-    canvas.getChildren.add(imageView)
+    imageView.relocate(location.x - imageSize/2, location.y - imageSize/2)
+    imageView
   }
 
   private def updateTaxiValues(taxis: List[Taxi]): Tuple2Zipped[Text, List[Text], Circle, List[Circle]] = {
@@ -91,16 +92,25 @@ class GUI(taxiSystem: TaxiSystem,
     taxiWithLabel
   }
 
+  private def updateAccidentValues(accidents: List[Accident]): List[ImageView] = {
+    val newListAccident: List[ImageView] = accidents.map(a => getAccidents(a.location))
+    newListAccident
+  }
+
   private def updateOrderValues(orders: List[Order]): List[Rectangle] = {
     val orderShapes = orders.map(o => createSquare(o.location.x, o.location.y, orderColor))
     orderShapes
   }
 
-  private def updateView(canvas: Group, oldTaxiWithLabel: Tuple2Zipped[Text, List[Text], Circle, List[Circle]], taxiWithLabel: Tuple2Zipped[Text, List[Text], Circle, List[Circle]], oldOrderList: List[Rectangle], orderList: List[Rectangle]) = {
+  private def updateView(canvas: Group, oldTaxiWithLabel: Tuple2Zipped[Text, List[Text], Circle, List[Circle]], taxiWithLabel: Tuple2Zipped[Text, List[Text], Circle, List[Circle]],
+                         oldOrderList: List[Rectangle], orderList: List[Rectangle],
+                         oldAccidentList: List[ImageView], accidentList: List[ImageView]) = {
     oldTaxiWithLabel.foreach((label, taxi) => canvas.children.removeAll(label, taxi))
     taxiWithLabel.foreach((label, taxi) => canvas.children.addAll(label, taxi))
     oldOrderList.foreach(o => canvas.children.remove(o))
     orderList.foreach(o => canvas.children.add(o))
+    oldAccidentList.foreach(a => canvas.children.remove(a))
+    accidentList.foreach(a => canvas.children.add(a))
   }
 
   private def createLegend(canvas: Group) = {
@@ -112,6 +122,8 @@ class GUI(taxiSystem: TaxiSystem,
     canvas.getChildren.add(createCircle(240, 25, onWayToCustomerStateColor, pointSize))
     canvas.getChildren.add(createText("order", Location(460, 0), padding, textColor))
     canvas.getChildren.add(createSquare(460, 25, orderColor))
+    canvas.getChildren.add(createText("accident", Location(545, 0), padding, textColor))
+    canvas.getChildren.add(getAccidents(Location(540, 25)))
 
   }
 
