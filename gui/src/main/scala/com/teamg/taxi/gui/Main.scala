@@ -20,6 +20,10 @@ object Main extends App {
   val orderSender = new SimulationOrderSender(ServiceConfig.orderUrl)
 
   orderSender.send(OrderRequest("I", "S", "normal", "normal", "abc"))(ec)
+  orderSender.send(OrderRequest("A", "B", "vip", "normal", "abc"))(ec)
+  orderSender.send(OrderRequest("C", "E", "normal", "normal", "abc"))(ec)
+  orderSender.send(OrderRequest("H", "J", "normal", "normal", "abc"))(ec)
+  orderSender.send(OrderRequest("P", "A", "vip", "normal", "abc"))(ec)
 
 
 }

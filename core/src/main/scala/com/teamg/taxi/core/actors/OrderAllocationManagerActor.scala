@@ -1,8 +1,9 @@
 package com.teamg.taxi.core.actors
 
+import java.time.temporal.ChronoUnit
 import java.time.{Clock, Instant}
 
-import akka.actor.{Actor, ActorRef, Props}
+import akka.actor.{Actor, ActorRef, ActorSystem, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import cats.Eq
@@ -13,7 +14,7 @@ import com.teamg.taxi.core.actors.OrderAllocationManagerActor.messages._
 import com.teamg.taxi.core.actors.TaxiSystemActor.messages.UnallocatedOrdersM
 import com.teamg.taxi.core.actors.resource.ResourceActor.messages.{CalculateCostM, NewOrderRequestM}
 import com.teamg.taxi.core.model.TaxiType.Van
-import com.teamg.taxi.core.model.{Order, Taxi, TaxiPureState, TaxiType}
+import com.teamg.taxi.core.model.{CustomerType, Order, OrderType, Taxi, TaxiPureState, TaxiType}
 
 import scala.collection.mutable
 import scala.concurrent.duration._
@@ -27,11 +28,16 @@ class OrderAllocationManagerActor(config: SimulationConfig,
   implicit val eqTaxiType: Eq[TaxiType] = Eq.fromUniversalEquals
   private var taxiActors: Map[String, ActorRef] = Map.empty
   private var taxiStates: Map[String, TaxiPureState] = Map.empty
-  private var taxiCost: Map[String, Option[Double]] = Map.empty
 
   private var orderActors: Map[String, ActorRef] = Map.empty
 
   private val orders: mutable.Map[String, Order] = mutable.Map.empty
+
+  private val ordersmap: mutable.Map[String, OrderRequest] = mutable.Map(Seq.empty[(String, OrderRequest)]: _*)
+
+  private val actorSystem = ActorSystem("OrderAllocationManager")
+
+  case class OrderRequest(time: Long, order: Order)
 
   implicit val ec = executionContext
 
@@ -68,15 +74,96 @@ class OrderAllocationManagerActor(config: SimulationConfig,
     Future(taxiActors(bids.minBy(_._2)._1))
   }
 
+  object timesToDecision {
+    val normal = 1000
+    val vip = 500
+    val supervip = 100
+  }
+
+  def getTimeToDecision(order: Order): Instant = {
+    order.orderType match {
+      case OrderType.Normal =>
+        order.customerType match {
+          case CustomerType.Normal => order.timeStamp.plus(timesToDecision.normal, ChronoUnit.SECONDS)
+          case CustomerType.Vip => order.timeStamp.plus(timesToDecision.vip, ChronoUnit.SECONDS)
+          case CustomerType.SuperVip => order.timeStamp.plus(timesToDecision.supervip, ChronoUnit.SECONDS)
+        }
+      case OrderType.Predefined(time) =>
+        order.customerType match {
+          case CustomerType.Normal => time.minus(timesToDecision.normal, ChronoUnit.SECONDS)
+          case CustomerType.Vip => time.minus(timesToDecision.vip, ChronoUnit.SECONDS)
+          case CustomerType.SuperVip => time.minus(timesToDecision.supervip, ChronoUnit.SECONDS)
+        }
+    }
+  }
+
+  case class OrderBids(order: Order, bids: Map[String, Double])
+
+  def scheduleTaxis() = {
+    val orderBidsFuture = ordersmap
+      .map(entry => entry._1 -> entry._2.order)
+      .map(entry => getBids(entry._2).map(bids => OrderBids(entry._2, bids)))
+
+    Future.sequence(orderBidsFuture)
+      .map(_.toList)
+      .map(list => assignToTaxis(list))
+      .map { taxiOrders =>
+        taxiOrders.map(orderTaxi => sendOrderToTaxi(orderTaxi._2, taxiActors(orderTaxi._1)))
+      }
+  }
+
+  def assignToTaxis(list: List[OrderBids]): Map[String, Order] = { // taxi -> Order
+    val dummy: List[(Order, String)] = list
+      .map(orderBids => orderBids.order -> orderBids.bids.minBy(_._2))
+      .map(a => (a._1, a._2._1))
+
+    val dummyAssign = dummy
+      .groupBy(_._2)
+      .filter(entry => entry._2.size == 1)
+      .flatMap(a => a._2)
+      .map(_.swap)
+
+    dummyAssign
+    //    val taxiAndPossibleOffers =
+    //      list
+    //        .flatMap(orderBid => orderBid.bids.map(bid => bid._1 -> (orderBid.order, bid._2)))
+    //        .groupBy(_._1)
+    //        .mapValues(_.map(_._2))
+
+    //    val abc: List[(Order, String, Double)] =
+    //      list
+    //        .flatMap(orderBid => orderBid.bids.map(bid => (orderBid.order, bid._1, bid._2)))
+    //
+    //    val taxiOrdersPairs =
+    //      taxiAndPossibleOffers.flatMap(value => value._2.map(orderBid => (value._1, orderBid._1, orderBid._2))).toList
+    //
+    //    // teraz potrzeba przefiltrowac
+    //
+    //    taxiOrdersPairs.filter()
+    //  }
+  }
+
+  def getBids(order: Order): Future[Map[String, Double]] = {
+    for {
+      filtered <- getPossibleTaxisByType(order.taxiType)
+      bids <- getBidsFromActors(order, filtered.keys.toList)
+    } yield bids
+  }
+
+
+  actorSystem.scheduler.scheduleAtFixedRate(10 seconds, 100 seconds)(() => scheduleTaxis())
 
   override def receive: Receive = {
     case ArrivedOrderM(order: Order) =>
       orders(order.id) = order
-      for {
-        filtered <- getPossibleTaxisByType(order.taxiType)
-        bids <- getBidsFromActors(order, filtered.keys.toList)
-        chosenActor <- choseActor(bids)
-      } yield sendOrderToTaxi(order, chosenActor)
+      val timeToDecision = getTimeToDecision(order)
+      ordersmap(order.id) = OrderRequest(timeToDecision.toEpochMilli, order)
+      println("ORDERS map: " + ordersmap)
+//      for {
+//        filtered <- getPossibleTaxisByType(order.taxiType)
+//        bids <- getBidsFromActors(order, filtered.keys.toList)
+//        chosenActor <- choseActor(bids)
+//      } yield sendOrderToTaxi(order, chosenActor)
 
 //      getCostFromTaxis(order, taxiActors, taxiStates)
 //      taxiStates = createInitialTaxiStates(taxiActors)
@@ -91,11 +178,9 @@ class OrderAllocationManagerActor(config: SimulationConfig,
     case SendTaxis(taxis) =>
       taxiActors = taxis
       taxiStates = createInitialTaxiStates(taxiActors)
-      taxiCost = createInitialTaxiCost(taxiActors)
 
-    case TaxiCostResponse(taxi, cost) =>
-      println(s"${taxi.id} cost: ${cost}")
-      taxiCost = taxiCost.updated(taxi.id, cost)
+//    case TaxiCostResponse(taxi, cost) =>
+//      println(s"${taxi.id} cost: ${cost}")
 
     case response: TaxiUpdateResponse =>
       response match {
@@ -103,6 +188,7 @@ class OrderAllocationManagerActor(config: SimulationConfig,
           taxiStates = taxiStates.updated(taxi.id, TaxiPureState.Free(timestamp))
         case TaxiUpdateResponse.TaxiPickUpCustomerM(taxi, id) =>
           taxiStates = taxiStates.updated(taxi.id, TaxiPureState.Occupied)
+          ordersmap.remove(id)
           orders.remove(id)
       }
 
@@ -112,12 +198,13 @@ class OrderAllocationManagerActor(config: SimulationConfig,
           taxiStates = taxiStates.updated(taxi.id, TaxiPureState.OnWayToCustomer)
         case TaxiOrderResponse.TaxiPickUpCustomerM(taxi, id) =>
           taxiStates = taxiStates.updated(taxi.id, TaxiPureState.Occupied)
+          ordersmap.remove(id)
         case TaxiOrderResponse.TaxiAlreadyOccupiedM(taxi) =>
         case TaxiOrderResponse.TaxiOnWayToAnotherClient(taxi) =>
       }
 
     case GetUnallocatedOrdersM =>
-      sender ! UnallocatedOrdersM(orders.values.toList)
+      sender ! UnallocatedOrdersM(ordersmap.values.map(_.order).toList)
 
   }
 
@@ -148,7 +235,7 @@ class OrderAllocationManagerActor(config: SimulationConfig,
     )
   }
 
-  private def createInitialTaxiCost(taxiActors: Map[String, ActorRef]): Map[String, Option[Double]] = {
+  def createInitialTaxiCost(taxiActors: Map[String, ActorRef]): Map[String, Option[Double]] = {
     taxiActors.map(p =>
       p._1 -> None
     ).toMap

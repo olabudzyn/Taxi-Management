@@ -47,7 +47,7 @@ class GUI(taxiSystem: TaxiSystem,
       val timer: AnimationTimer = AnimationTimer { now => {
         if (now - lastUpdate >= refreshTime) {
           val future = taxiSystem.receive.map(r => (r.orders, r.taxis))
-          val responseTaxiState = Await.result(future, Duration(5, TimeUnit.SECONDS))
+          val responseTaxiState = Await.result(future, Duration(10, TimeUnit.SECONDS))
           val newTaxiState = updateTaxiValues(responseTaxiState._2)
           val newResponseOrder = updateOrderValues(responseTaxiState._1)
           updateView(canvas, taxiWithLabel, newTaxiState, orderList, newResponseOrder)
