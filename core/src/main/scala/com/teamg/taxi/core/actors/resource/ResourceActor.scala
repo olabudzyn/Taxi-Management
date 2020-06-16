@@ -20,8 +20,6 @@ class ResourceActor(clock: Clock,
   private var location = taxi.defaultNode.location
   private var taxiState: TaxiState = TaxiState.Free(taxi.defaultNode.id)
 
-//  private implicit val showLocation: Show[Location] = Show.show(location => s"x(${location.x.show}) y(${location.y.show})")
-
   override def receive: Receive = {
     case GetTaxiStateM =>
       sender ! TaxiStateM(taxi.id, location, taxiState)
@@ -51,6 +49,7 @@ class ResourceActor(clock: Clock,
         taxiPath.getState match {
           case Finished =>
             taxiState = TaxiState.Free(order.target)
+            log.info(s"${taxi.id} finished course: [${order.id} (${order.customerType})]")
             Some(TaxiFinishedOrderM(taxi, clock.instant()))
           case TaxiPathState.InProgress =>
             None
@@ -60,14 +59,11 @@ class ResourceActor(clock: Clock,
         location = taxiPath.update(location, dist)
         taxiPath.getState match {
           case Finished =>
-//            log.info(s"${taxi.id} arrived to customer: [${order.id}] ${order.customerType}")
             val edges = cityMap.edges(order.from, order.target)
-            println("NEW EDGES TO CUSTOMER")
-            println(edges.map(_.map(_.label.value)).get)
+            log.info(s"${taxi.id} arrived to customer: [${order.id} (${order.customerType})], way to target: ${edges.map(_.map(_.label.value)).get}")
             taxiState = TaxiState.Occupied(order, TaxiPath(edges.get))
             Some(TaxiPickUpCustomerM(taxi, order.id))
           case TaxiPathState.InProgress =>
-//            log.info(s"${taxi.id} is on the way to customer, course id: [${order.id}] ${order.customerType}, location: ${location.show}")
             None
         }
     }
@@ -78,12 +74,12 @@ class ResourceActor(clock: Clock,
       case TaxiState.Free(nodeId) =>
         if (order.from === nodeId) {
           val startEdges = cityMap.edges(order.from, order.target)
+          log.info(s"${taxi.id} was in place, picked up customer: [${order.id} (${order.customerType})], way to target: ${startEdges.map(_.map(_.label.value)).get}")
           taxiState = TaxiState.Occupied(order, TaxiPath(startEdges.get))
           TaxiOrderResponse.TaxiPickUpCustomerM(taxi, order.id)
         } else {
           val startEdges = cityMap.edges(nodeId, order.from)
-          println(startEdges.map(_.map(_.label.value)).get)
-          log.info(s"${taxi.id} is on the way to customer, edges are [${startEdges.map(_.map(_.label.value).show)}]")
+          log.info(s"${taxi.id} is on the way to customer: [${order.id} (${order.customerType})], way to customer: ${startEdges.map(_.map(_.label.value)).get}")
           taxiState = TaxiState.OnWayToCustomer(order, TaxiPath(startEdges.get))
           TaxiOrderResponse.TaxiOnWayToCustomerM(taxi)
         }
